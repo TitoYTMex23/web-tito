@@ -1,106 +1,99 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo VIP</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 10px; }
-        .game-card { background: #1e1e1e; margin-bottom: 10px; padding: 10px; border-radius: 8px; display: flex; align-items: center; border: 1px solid #333; }
-        .game-card img { width: 70px; height: 100px; object-fit: cover; border-radius: 4px; margin-right: 15px; background: #333; }
-        .game-info { flex: 1; }
-        h3 { margin: 0 0 5px 0; font-size: 15px; color: #00ff88; }
-        p { margin: 0 0 10px 0; font-size: 12px; color: #aaa; }
-        button { background: #0088cc; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
-        /* Estilo para el reporte de errores en pantalla */
-        #debug-console { color: #ff5555; background: #2a0000; padding: 15px; border: 1px solid red; border-radius: 5px; margin-bottom: 20px; white-space: pre-wrap; display: none; }
-    </style>
-</head>
-<body>
+import requests
+from bs4 import BeautifulSoup
+import json
+import urllib.parse
+import time
+import re
 
-    <div id="debug-console"></div>
-    
-    <div id="loading" style="text-align:center; padding: 20px;">
-        ⏳ Cargando base de datos...
-    </div>
+# --- TUS LLAVES ---
+LLAVES = [
+    "f7c4823bc30547ecaa903e4b8325317f", 
+    "f29b1f90e6b84d90804553e1a57b49ff",
+    "f812a1f7516144729bd00c31058846c8",
+    "a38abdb3603149ea9cbb0d29ba9ad2be"
+]
+key_actual = 0
+PAGINAS_TOTALES = 5 
 
-    <div id="games-container"></div>
+def obtener_html(url):
+    global key_actual
+    url_encoded = urllib.parse.quote(url)
+    while key_actual < len(LLAVES):
+        api_url = f"https://api.scrapingant.com/v2/general?url={url_encoded}&x-api-key={LLAVES[key_actual]}&browser=true"
+        try:
+            r = requests.get(api_url, timeout=60)
+            if r.status_code == 200: return r.text
+            else: key_actual += 1
+        except: return None
+    return None
 
-    <script>
-        // 1. CHIVATO DE ERRORES (Muestra el error en la pantalla del cel)
-        window.onerror = function(msg, url, line) {
-            const consoleBox = document.getElementById('debug-console');
-            document.getElementById('loading').style.display = 'none';
-            consoleBox.style.display = 'block';
-            consoleBox.innerHTML += `❌ ERROR CRÍTICO:\n${msg}\n\nEn archivo: ${url}\nLínea: ${line}\n\n`;
-            return false;
-        };
-    </script>
+def limpiar_texto(texto):
+    if not texto: return ""
+    return texto.strip().replace("\n", " ").replace("\r", "")
 
-    <script src="games.js"></script>
+def iniciar_cosecha():
+    base_datos = []
+    print(f"💎 INICIANDO SCRAPER V4 (FILTRO LIMPIEZA)")
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+    for p in range(1, PAGINAS_TOTALES + 1):
+        url = f"https://www.gamestorrents.app/juegos-pc/page/{p}/"
+        print(f"🌐 Escaneando Página {p}...")
+        html = obtener_html(url)
+        if not html: break
 
-        const container = document.getElementById('games-container');
-        const loading = document.getElementById('loading');
-        let visibleCount = 50;
+        soup = BeautifulSoup(html, 'html.parser')
+        juegos = soup.find_all('div', class_='post') 
+        if not juegos: juegos = soup.find_all('a', title=True)
 
-        function init() {
-            // Verificamos si games.js cargó bien
-            if (typeof DATABASE_JUEGOS === 'undefined') {
-                throw new Error("El archivo games.js no se pudo leer. Revisa si le falta una coma ',' o un corchete ']'.");
-            }
-
-            loading.style.display = 'none';
-            renderChunk(); // Cargamos los primeros 50
-        }
-
-        function renderChunk() {
-            const currentLen = container.children.length;
-            const chunk = DATABASE_JUEGOS.slice(currentLen, currentLen + visibleCount);
-
-            if (currentLen === 0 && chunk.length === 0) {
-                container.innerHTML = "<p style='text-align:center'>La lista está vacía.</p>";
-                return;
-            }
-
-            chunk.forEach(game => {
-                const div = document.createElement('div');
-                div.className = 'game-card';
+        for item in juegos:
+            try:
+                a_tag = item if item.name == 'a' else item.find('a')
+                if not a_tag: continue
                 
-                // Si la imagen falla, ponemos un color solido
-                const imgUrl = game.imagen || 'https://via.placeholder.com/150';
+                href = a_tag.get('href', '')
+                titulo_raw = a_tag.get('title', '')
                 
-                div.innerHTML = `
-                    <img src="${imgUrl}" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==';">
-                    <div class="game-info">
-                        <h3>${game.titulo}</h3>
-                        <p>${game.info || 'PC Game'}</p>
-                        <button onclick="enviar('${game.comando}')">DESCARGAR</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
+                # --- FILTRO DE ORO ---
+                # Ignoramos categorías y basura
+                if "juegos torrents de" in titulo_raw.lower() or "page" in href:
+                    continue
 
-        function enviar(cmd) {
-            tg.sendData(cmd);
-            tg.close(); // Cierra la web al tocar
-        }
+                if '/juegos-pc/' in href and len(titulo_raw) > 3:
+                    t = titulo_raw.replace('Descargar ', '').replace(' para PC', '').replace(' por Torrent', '').split('(')[0].strip()
+                    print(f"   > Procesando: {t}...", end="\r")
+                    
+                    sub_html = obtener_html(href)
+                    datos = {'imagen': '', 'peso': 'PC', 'desc': 'Disponible en TITOMX.'}
+                    
+                    if sub_html:
+                        sub_soup = BeautifulSoup(sub_html, 'html.parser')
+                        og = sub_soup.find("meta", property="og:image")
+                        if og: datos['imagen'] = og["content"]
+                        
+                        texto = sub_soup.get_text()
+                        match = re.search(r'(?:Tamaño|Size|Peso)[:\s]+([\d\.]+\s*[GM]Bs?)', texto, re.IGNORECASE)
+                        if match: datos['peso'] = match.group(1)
+                        
+                        og_desc = sub_soup.find("meta", property="og:description")
+                        if og_desc: datos['desc'] = limpiar_texto(og_desc["content"])[:300] + "..."
 
-        // Carga infinita al bajar
-        window.onscroll = function() {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-                renderChunk();
-            }
-        };
+                    # Si no hay imagen, usamos placeholder
+                    if not datos['imagen']: datos['imagen'] = "https://via.placeholder.com/150"
 
-        // Arrancamos
-        init();
-    </script>
-</body>
-</html>
+                    base_datos.append({
+                        "titulo": t,
+                        "imagen": datos['imagen'],
+                        "info": f"TITOMX.STORE | {datos['peso']}",
+                        "desc": datos['desc'],
+                        "comando": f"/game {t}"
+                    })
+            except: continue
+
+    with open("games.js", "w", encoding="utf-8") as f:
+        f.write("const DATABASE_JUEGOS = ")
+        json.dump(base_datos, f, ensure_ascii=False, indent=2)
+        f.write(";")
+    print("\n✅ LISTO. Sube games.js a GitHub.")
+
+if __name__ == "__main__":
+    iniciar_cosecha()
