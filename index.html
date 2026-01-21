@@ -1,232 +1,55 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TitoYTVIP - Hub</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #00f2ea;
-            --secondary: #ff0055;
-            --bg-dark: #0f0f13;
-            --card-bg: #1a1a20;
-            --text-gray: #a0a0b0;
-        }
-        body {
-            background-color: var(--bg-dark);
-            color: #ffffff;
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            padding-bottom: 80px;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .header {
-            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
-            padding: 20px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-        .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5em;
-            color: var(--primary);
-            text-shadow: 0 0 10px rgba(0, 242, 234, 0.5);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .vip-badge { font-size: 0.6em; background: var(--secondary); padding: 3px 8px; border-radius: 5px; color: white; }
+<script src="games.js"></script> <script>
+    // Inicializar Telegram
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    const container = document.getElementById('games-container');
+    const loading = document.getElementById('loading');
+
+    // Renderizar juegos (Versión optimizada)
+    function renderGames() {
+        if (loading) loading.style.display = 'none';
         
-        .section { display: none; padding: 15px; animation: fadeUp 0.4s ease; }
-        .section.active { display: block; }
-        
-        h2 { font-size: 1.2em; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 20px; }
-        
-        .games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        
-        .game-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            transition: transform 0.2s;
-        }
-        .game-img { width: 100%; height: 150px; object-fit: cover; display: block; cursor: pointer; }
-        .fav-btn {
-            position: absolute; top: 10px; right: 10px;
-            background: rgba(0,0,0,0.6);
-            border: none; color: white; width: 32px; height: 32px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px); z-index: 5; cursor: pointer;
-        }
-        .fav-btn.active { color: var(--secondary); }
-        
-        .game-info { padding: 10px; cursor: pointer; }
-        .game-title { font-size: 0.9em; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .game-genre { font-size: 0.7em; color: var(--text-gray); }
-        .game-dl-btn {
-            margin-top: 8px; background: rgba(0, 242, 234, 0.1); color: var(--primary);
-            border: 1px solid var(--primary); width: 100%; padding: 5px;
-            border-radius: 6px; font-size: 0.8em; text-align: center;
+        // Cargamos solo los primeros 100 para probar rápido
+        const juegosMostrados = typeof DATABASE_JUEGOS !== 'undefined' ? DATABASE_JUEGOS.slice(0, 100) : [];
+
+        if (juegosMostrados.length === 0) {
+            container.innerHTML = "<p style='color:white; text-align:center;'>Error: No se cargó games.js</p>";
+            return;
         }
 
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: #15151a; display: flex; justify-content: space-around;
-            padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000;
-        }
-        .nav-item { text-align: center; color: #666; font-size: 0.7em; flex: 1; cursor: pointer; }
-        .nav-item i { font-size: 1.4em; display: block; margin-bottom: 4px; }
-        .nav-item.active { color: var(--primary); }
-        
-        .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-            background: var(--primary); color: #000; padding: 10px 20px; border-radius: 30px;
-            font-weight: bold; transition: 0.3s; z-index: 2000;
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body>
-
-    <div class="header">
-        <div class="logo">
-            <span>TITAN <span style="color:white">V52</span></span>
-            <span class="vip-badge">PRO</span>
-        </div>
-    </div>
-
-    <div id="toast" class="toast">✅ Enviando al Bot...</div>
-
-    <div style="padding: 0 15px 15px 15px;">
-        <div style="position: relative;">
-            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary);"></i>
-            <input type="text" id="gameSearch" placeholder="Buscar entre miles de juegos..." 
-                style="width: 100%; padding: 12px 12px 12px 45px; border-radius: 25px; border: 1px solid #333; background: #1a1a20; color: white; outline: none; box-sizing: border-box;">
-        </div>
-    </div>
-
-    <div id="home" class="section active">
-        <h2>🔥 Catálogo Completo</h2>
-        <div class="games-grid" id="contenedor-juegos"></div>
-    </div>
-
-    <div id="favorites" class="section">
-        <h2>❤️ Mis Favoritos</h2>
-        <div class="games-grid" id="contenedor-favoritos">
-            <p style="grid-column: span 2; text-align: center; color: #666; padding-top: 50px;">Aún no tienes favoritos.</p>
-        </div>
-    </div>
-
-    <div id="commands" class="section">
-        <h2>⚡ Comandos Rápidos</h2>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            <div class="game-info" style="background:var(--card-bg); border-radius:10px; padding:15px; margin-bottom:10px;" onclick="copy('/my_status')">
-                <i class="fa-solid fa-user"></i> /my_status - Ver mi perfil
-            </div>
-            <div class="game-info" style="background:var(--card-bg); border-radius:10px; padding:15px;" onclick="copy('/id')">
-                <i class="fa-solid fa-fingerprint"></i> /id - Ver mi ID
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home', this)">
-            <i class="fa-solid fa-house"></i> Catálogo
-        </div>
-        <div class="nav-item" onclick="switchTab('favorites', this)">
-            <i class="fa-solid fa-heart"></i> Favoritos
-        </div>
-        <div class="nav-item" onclick="switchTab('commands', this)">
-            <i class="fa-solid fa-terminal"></i> Comandos
-        </div>
-    </div>
-
-    <script src="games.js"></script>
-    <script>
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-
-        const contenedorJuegos = document.getElementById('contenedor-juegos');
-        const contenedorFavoritos = document.getElementById('contenedor-favoritos');
-        const searchInput = document.getElementById('gameSearch');
-
-        let favoritos = JSON.parse(localStorage.getItem('tito_favs')) || [];
-
-        function toggleFavorite(juegoTitulo, event) {
-            event.stopPropagation();
-            const index = favoritos.indexOf(juegoTitulo);
-            if (index === -1) {
-                favoritos.push(juegoTitulo);
-                Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-            } else {
-                favoritos.splice(index, 1);
-                Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-            }
-            localStorage.setItem('tito_favs', JSON.stringify(favoritos));
-            renderGames(searchInput.value);
-            renderFavorites();
-        }
-
-        function createCard(juego) {
-            const isFav = favoritos.includes(juego.titulo);
+        juegosMostrados.forEach(game => {
             const card = document.createElement('div');
             card.className = 'game-card';
+            // Usamos un onclick directo y sencillo
             card.innerHTML = `
-                <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${juego.titulo.replace(/'/g, "\\'")}', event)">
-                    <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
-                </button>
-                <img src="${juego.imagen}" class="game-img" loading="lazy" onclick="copy('${juego.comando}')">
-                <div class="game-info" onclick="copy('${juego.comando}')">
-                    <div class="game-title">${juego.titulo}</div>
-                    <div class="game-genre">${juego.info}</div>
-                    <div class="game-dl-btn">Abrir en el Bot</div>
+                <img src="${game.imagen}" onerror="this.src='https://via.placeholder.com/150?text=No+Img'">
+                <div class="game-info">
+                    <h3>${game.titulo}</h3>
+                    <button class="download-btn" onclick="enviarAlBot('${game.comando}')">
+                        DESCARGAR
+                    </button>
                 </div>
             `;
-            return card;
-        }
+            container.appendChild(card);
+        });
+    }
 
-        function renderGames(filtro = "") {
-            if (typeof DATABASE_JUEGOS === 'undefined') return;
-            contenedorJuegos.innerHTML = "";
-            const resultados = DATABASE_JUEGOS.filter(j => j.titulo.toLowerCase().includes(filtro.toLowerCase()));
-            resultados.slice(0, 50).forEach(j => contenedorJuegos.appendChild(createCard(j)));
+    // Función del Botón con "Chivato"
+    function enviarAlBot(comando) {
+        // 1. Alerta visual en el celular
+        alert("Enviando: " + comando); 
+        
+        // 2. Enviar a Telegram
+        try {
+            tg.sendData(comando);
+            // No cerramos la web inmediatamente para que veas si sale el error
+        } catch (e) {
+            alert("Error enviando: " + e);
         }
+    }
 
-        function renderFavorites() {
-            if (typeof DATABASE_JUEGOS === 'undefined') return;
-            contenedorFavoritos.innerHTML = "";
-            const misFavs = DATABASE_JUEGOS.filter(j => favoritos.includes(j.titulo));
-            if (misFavs.length === 0) {
-                contenedorFavoritos.innerHTML = '<p style="grid-column: span 2; text-align: center; color: #666; padding-top: 50px;">Aún no tienes favoritos.</p>';
-            } else {
-                misFavs.forEach(j => contenedorFavoritos.appendChild(createCard(j)));
-            }
-        }
-
-        searchInput.addEventListener('input', (e) => renderGames(e.target.value));
-        renderGames();
-        renderFavorites();
-
-        function switchTab(tabId, element) {
-            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            element.classList.add('active');
-            if (tabId === 'favorites') renderFavorites();
-            Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
-
-        function copy(text) {
-            // Envía el comando al bot y cierra la Mini App
-            Telegram.WebApp.sendData(text);
-            Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-        }
-    </script>
-</body>
-</html>
+    // Arrancar
+    document.addEventListener('DOMContentLoaded', renderGames);
+</script>
