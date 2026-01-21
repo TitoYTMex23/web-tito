@@ -1,81 +1,178 @@
-<script>
-        // 1. INICIALIZAR TELEGRAM (CON PROTECCIÓN)
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>TITOMX STORE</title>
+    
+    <script src="config.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    
+    <style>
+        :root { --primary: #00e5ff; --bg: #0a0a0a; --card: #141414; --text: #fff; --gray: #aaa; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0 0 80px 0; -webkit-tap-highlight-color: transparent; }
+        
+        .header { position: sticky; top: 0; background: rgba(10,10,10,0.95); z-index: 100; padding: 15px; backdrop-filter: blur(10px); border-bottom: 1px solid #222; }
+        .logo { text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .logo span { color: var(--primary); }
+        .search-bar { width: 100%; background: #222; border: 1px solid #333; padding: 12px; border-radius: 30px; color: white; outline: none; text-align: center; }
+        
+        .featured-container { padding: 15px; }
+        .swiper { width: 100%; height: 220px; border-radius: 12px; }
+        .swiper-slide { background-size: cover; background-position: center; position: relative; }
+        .slide-content { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, black, transparent); padding: 20px; box-sizing: border-box; }
+        .slide-badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+        .slide-title { font-size: 18px; font-weight: bold; margin: 5px 0; }
+
+        .categories { display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px; scrollbar-width: none; }
+        .cat-pill { background: #222; padding: 8px 16px; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; border: 1px solid #333; }
+        .cat-pill.active { background: var(--primary); color: #000; font-weight: bold; border-color: var(--primary); }
+
+        .view-section { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        
+        .section-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+
+        .game-card, .store-item { background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 15px; display: flex; gap: 15px; border: 1px solid #222; }
+        .game-img, .store-img { width: 90px; height: 130px; object-fit: cover; border-radius: 8px; background: #222; flex-shrink: 0; }
+        .game-info, .store-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .store-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .store-item { flex-direction: column; gap: 5px; } 
+        .store-img { width: 100%; height: 100px; }
+
+        h3, .store-title { font-size: 15px; font-weight: bold; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .meta, .store-price { color: var(--primary); font-size: 11px; font-weight: bold; margin: 5px 0; }
+        .desc { font-size: 11px; color: #888; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .actions { display: flex; gap: 5px; margin-top: 5px; }
+        .btn-base { flex: 1; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-dl { background: var(--primary); color: black; }
+        .btn-video { background: #333; color: white; border: 1px solid #444; }
+        .btn-fav { width: 35px; flex: none; background: #222; color: #666; border: 1px solid #333; font-size: 14px; }
+        .btn-fav.is-fav { color: #ff4757; border-color: #ff4757; }
+
+        /* Video Modal */
+        #video-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center; flex-direction:column; }
+        .video-box { width:90%; aspect-ratio:16/9; background:black; }
+        .close-vid { margin-top:15px; background:none; border:1px solid white; color:white; padding:5px 15px; border-radius:20px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(15,15,15,0.98); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 1000; backdrop-filter: blur(10px); }
+        .nav-item { color: #666; text-align: center; font-size: 9px; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .nav-item i { font-size: 18px; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div id="video-modal">
+        <div class="video-box"><iframe id="video-frame" width="100%" height="100%" frameborder="0" allowfullscreen></iframe></div>
+        <button class="close-vid" onclick="cerrarVideo()">CERRAR</button>
+    </div>
+
+    <div id="view-games" class="view-section active" style="padding:0">
+        <div class="header">
+            <div class="logo">TITO<span>MX</span></div>
+            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Buscar juego..." onkeyup="filtrarJuegos()">
+        </div>
+        <div class="featured-container">
+            <div class="swiper"><div class="swiper-wrapper" id="featured-wrapper"></div><div class="swiper-pagination"></div></div>
+        </div>
+        <div class="categories" id="cat-container">
+            <div class="cat-pill active" onclick="filtrarCategoria('Todo')">🔥 Todo</div>
+            <div class="cat-pill" onclick="filtrarCategoria('Accion')">⚔️ Acción</div>
+            <div class="cat-pill" onclick="filtrarCategoria('Aventura')">🗺️ Aventura</div>
+            <div class="cat-pill" onclick="filtrarCategoria('Deportes')">⚽ Deportes</div>
+            <div class="cat-pill" onclick="filtrarCategoria('Carreras')">🏎️ Carreras</div>
+        </div>
+        <div id="games-container" style="padding:15px"></div>
+    </div>
+
+    <div id="view-store" class="view-section">
+        <div class="section-title"><i class="fas fa-shopping-cart"></i> Tienda</div>
+        <div id="store-container" class="store-grid"></div>
+    </div>
+
+    <div id="view-series" class="view-section">
+        <div class="section-title"><i class="fas fa-tv"></i> Series TV</div>
+        <div id="series-container" class="store-grid"></div>
+    </div>
+
+    <div id="view-novelas" class="view-section">
+        <div class="section-title"><i class="fas fa-book-open"></i> Novelas</div>
+        <div id="novelas-container" class="store-grid"></div>
+    </div>
+
+    <div id="view-favs" class="view-section">
+        <div class="section-title"><i class="fas fa-heart"></i> Favoritos</div>
+        <div id="favs-container"></div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="cambiarTab('games', this)"><i class="fas fa-gamepad"></i> Juegos</div>
+        <div class="nav-item" onclick="cambiarTab('series', this)"><i class="fas fa-tv"></i> Series</div>
+        <div class="nav-item" onclick="cambiarTab('novelas', this)"><i class="fas fa-book-open"></i> Novelas</div>
+        <div class="nav-item" onclick="cambiarTab('store', this)"><i class="fas fa-store"></i> Tienda</div>
+        <div class="nav-item" onclick="cambiarTab('favs', this)"><i class="fas fa-heart"></i> Favs</div>
+    </div>
+
+    <script src="games.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
         let tg = null;
         try {
             if (window.Telegram && window.Telegram.WebApp) {
                 tg = window.Telegram.WebApp;
-                tg.ready();
-                tg.expand();
-            } else {
-                console.log("⚠️ Modo Navegador (Fuera de Telegram)");
+                tg.ready(); tg.expand();
             }
-        } catch (e) { console.log(e); }
+        } catch (e) { console.log("Modo Navegador"); }
 
-        // 🧠 INTELIGENCIA DE CATEGORÍAS
         const KEYWORDS = {
-            'Accion': ['war', 'fight', 'duty', 'battle', 'combat', 'kill', 'dead', 'gun', 'sniper', 'evil', 'resident', 'devil', 'crysis', 'halo', 'doom', 'shooter'],
-            'Aventura': ['tomb', 'raider', 'uncharted', 'assassin', 'creed', 'god', 'zelda', 'horizon', 'stray', 'lego', 'prince', 'journey', 'hogwarts'],
-            'Deportes': ['fifa', 'pes', 'nba', 'soccer', 'football', 'wwe', 'ufc', 'tennis', 'golf', 'skate', 'f1', 'manager', 'fc 24'],
-            'Estrategia': ['age of', 'empire', 'civilization', 'warcraft', 'starcraft', 'total war', 'command', 'tycoon', 'city', 'anno', 'crusader'],
-            'Carreras': ['need for speed', 'forza', 'gran turismo', 'dirt', 'rally', 'moto', 'car', 'driver', 'burnout', 'asphalt', 'hot wheels'],
-            'Simulacion': ['sims', 'simulator', 'truck', 'flight', 'farm', 'mechanic', 'train', 'bus', 'house flipper']
+            'Accion': ['war', 'fight', 'duty', 'battle', 'kill', 'gun', 'resident', 'crysis', 'halo', 'doom'],
+            'Aventura': ['tomb', 'uncharted', 'assassin', 'god', 'zelda', 'horizon', 'lego', 'hogwarts'],
+            'Deportes': ['fifa', 'pes', 'nba', 'soccer', 'wwe', 'ufc', 'skate', 'f1'],
+            'Carreras': ['speed', 'forza', 'gran turismo', 'dirt', 'moto', 'car', 'asphalt']
         };
-
         let juegosMostrados = [];
         let favoritos = JSON.parse(localStorage.getItem('tito_favs_pro')) || [];
-        let categoriaActual = 'Todo';
         let swiper;
 
-        // --- FUNCIÓN INIT (LA JEFA) ---
         function init() {
-            console.log("🚀 Iniciando TitoMX...");
-
-            // A) CARGAR CONFIGURACIÓN (Panel Admin)
+            // 1. Cargar Configuración (Protegido contra errores)
             if (typeof TITO_CONFIG !== 'undefined') {
                 document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
-                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
-                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
-                
                 renderTienda();
                 renderExtra('series', 'series-container');   
                 renderExtra('novelas', 'novelas-container'); 
             } else {
-                console.log("⚠️ No se encontró config.js");
+                console.log("⚠️ Error: config.js no cargó o tiene error de sintaxis.");
             }
 
-            // B) CARGAR JUEGOS (Base de Datos)
+            // 2. Cargar Juegos (Protegido contra errores)
             if (typeof DATABASE_JUEGOS !== 'undefined') {
                 juegosMostrados = DATABASE_JUEGOS;
                 renderDestacados();
                 renderJuegos(juegosMostrados, 'games-container');
             } else {
-                document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>⚠️ Error: Sube el archivo games.js</p>";
+                // Si llegamos aquí, games.js está roto. Mostramos aviso.
+                const container = document.getElementById('games-container');
+                if(container) {
+                     container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px'>⚠️ Error en games.js: Revisa las comillas.</p>";
+                }
             }
         }
-
-        // --- FUNCIONES DE RENDERIZADO ---
 
         function renderTienda() {
             const container = document.getElementById('store-container');
             if(!container) return;
             container.innerHTML = "";
-            
-            if (TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
-                TITO_CONFIG.tienda.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'store-item';
-                    div.innerHTML = `
-                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/300?text=Producto'">
-                        <div class="store-info">
-                            <div class="store-title">${item.nombre}</div>
-                            <div class="store-price" style="color:${TITO_CONFIG.color_principal}">${item.precio}</div>
-                            <button class="btn-buy" style="background:${TITO_CONFIG.color_principal}" onclick="comprar('${item.comando}')">COMPRAR</button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } else {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>No hay productos.</p>";
+            if (TITO_CONFIG.tienda) {
+                TITO_CONFIG.tienda.forEach(item => { container.appendChild(crearCardTienda(item, "COMPRAR")); });
             }
         }
 
@@ -83,72 +180,28 @@
             const container = document.getElementById(containerId);
             if(!container) return;
             container.innerHTML = "";
-            
-            const lista = (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
-            
+            const lista = (TITO_CONFIG && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
             if (lista.length > 0) {
-                lista.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'store-item'; 
-                    div.innerHTML = `
-                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/300?text=Sin+Foto'">
-                        <div class="store-info">
-                            <div class="store-title">${item.titulo}</div>
-                            <div class="store-price" style="color:#aaa; font-size:11px">${item.info}</div>
-                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER AHORA</button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
+                lista.forEach(item => { container.appendChild(crearCardTienda(item, "VER")); });
             } else {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666; font-size:12px;'>Próximamente...</p>";
+                container.innerHTML = "<p style='color:#666; font-size:12px; grid-column:1/-1; text-align:center;'>Próximamente...</p>";
             }
         }
 
-        function renderDestacados() {
-            const wrapper = document.getElementById('featured-wrapper');
-            if(!wrapper) return;
-            // Filtramos los destacados
-            const tops = DATABASE_JUEGOS.filter(g => g.destacado === true).slice(0,5);
-            
-            if(tops.length === 0) { 
-                document.querySelector('.featured-container').style.display='none'; 
-                return; 
-            }
-
-            tops.forEach(game => {
-                // --- EL CAMBIO CLAVE ESTÁ AQUÍ ---
-                // Usamos el 'banner' si existe, si no, la 'imagen' original sin el proxy que la achica
-                let imgUrl = game.banner ? game.banner : game.imagen;
-                
-                const div = document.createElement('div');
-                div.className = 'swiper-slide';
-                // Ajustamos el CSS para que la imagen se centre bien sin estirarse feo
-                div.style.backgroundImage = `url('${imgUrl}')`;
-                div.style.backgroundSize = "cover"; // Cubrir todo el espacio
-                div.style.backgroundPosition = "center top"; // Centrar la imagen
-                
-                div.innerHTML = `
-                    <div class="slide-content">
-                        <span class="slide-badge">TOP</span>
-                        <div class="slide-title">${game.titulo}</div>
-                        <button class="btn-base btn-dl" style="width: auto; padding: 8px 20px; margin-top:10px;" onclick="enviar('${game.comando}')">
-                            <i class="fas fa-rocket"></i> DESCARGAR AHORA
-                        </button>
-                    </div>
-                `;
-                wrapper.appendChild(div);
-            });
-
-            // Iniciamos el carrusel
-            new Swiper('.swiper', { 
-                slidesPerView:1, 
-                loop:true, 
-                autoplay:{delay:4000, disableOnInteraction: false}, // Un poco más lento para apreciar la foto
-                pagination:{el:'.swiper-pagination', clickable: true},
-                effect: "fade" // Efecto de desvanecimiento suave (opcional, se ve más pro)
-            });
+        function crearCardTienda(item, btnText) {
+            const div = document.createElement('div');
+            div.className = 'store-item';
+            div.innerHTML = `
+                <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150'">
+                <div class="store-info">
+                    <div class="store-title">${item.nombre || item.titulo}</div>
+                    <div class="store-price">${item.precio || item.info || ''}</div>
+                    <button class="btn-base btn-dl" style="margin-top:auto" onclick="enviar('${item.comando}')">${btnText}</button>
+                </div>
+            `;
+            return div;
         }
+
         function renderJuegos(lista, containerId) {
             const container = document.getElementById(containerId);
             if(!container) return;
@@ -162,14 +215,12 @@
 
             lista.forEach(game => {
                 const isFav = favoritos.includes(game.titulo);
-                let imgUrl = getProxyImg(game.imagen);
                 const div = document.createElement('div');
                 div.className = 'game-card';
+                let vidBtn = game.video ? `<button class="btn-base btn-video" onclick="verVideo('${game.video}')"><i class="fas fa-play"></i></button>` : '';
                 
-                let videoBtn = game.video ? `<button class="btn-base btn-video" onclick="verVideo('${game.video}')"><i class="fas fa-play-circle"></i> TRAILER</button>` : '';
-
                 div.innerHTML = `
-                    <img class="game-img" src="${imgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/150?text=Error'">
+                    <img class="game-img" src="${getProxyImg(game.imagen)}" loading="lazy">
                     <div class="game-info">
                         <div>
                             <h3>${game.titulo}</h3>
@@ -177,9 +228,9 @@
                             <div class="desc">${game.desc}</div>
                         </div>
                         <div class="actions">
-                            <button class="btn-base btn-dl" onclick="descargar('${game.comando}')"><i class="fas fa-download"></i> BAJAR</button>
-                            ${videoBtn}
-                            <button class="btn-base btn-fav ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${game.titulo.replace(/'/g, "\\'")}')"><i class="fas ${isFav ? 'fa-heart' : 'fa-heart'}"></i></button>
+                            <button class="btn-base btn-dl" onclick="enviar('${game.comando}')">BAJAR</button>
+                            ${vidBtn}
+                            <button class="btn-base btn-fav ${isFav?'is-fav':''}" onclick="toggleFav('${game.titulo.replace(/'/g, "\\'")}')">♥</button>
                         </div>
                     </div>
                 `;
@@ -188,7 +239,66 @@
             container.appendChild(fragment);
         }
 
-        // --- UTILIDADES ---
+        function renderDestacados() {
+            const wrapper = document.getElementById('featured-wrapper');
+            if(!wrapper) return;
+            const tops = DATABASE_JUEGOS.filter(g => g.destacado).slice(0,5);
+            if(tops.length === 0) { document.querySelector('.featured-container').style.display='none'; return; }
+
+            tops.forEach(game => {
+                let imgUrl = game.banner ? game.banner : game.imagen;
+                const div = document.createElement('div');
+                div.className = 'swiper-slide';
+                div.style.backgroundImage = `url('${imgUrl}')`;
+                div.innerHTML = `<div class="slide-content"><span class="slide-badge">TOP</span><div class="slide-title">${game.titulo}</div></div>`;
+                div.onclick = () => enviar(game.comando);
+                wrapper.appendChild(div);
+            });
+
+            new Swiper('.swiper', { slidesPerView:1, loop:true, autoplay:{delay:3000}, pagination:{el:'.swiper-pagination'} });
+        }
+
+        function cambiarTab(tab, el) {
+            document.querySelectorAll('.view-section').forEach(d => d.classList.remove('active'));
+            document.getElementById('view-'+tab).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+            if(tab === 'favs') renderJuegos(DATABASE_JUEGOS.filter(g => favoritos.includes(g.titulo)), 'favs-container');
+            window.scrollTo(0,0);
+        }
+
+        function filtrarCategoria(cat) {
+            document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            if(cat === 'Todo') juegosMostrados = DATABASE_JUEGOS;
+            else juegosMostrados = DATABASE_JUEGOS.filter(g => {
+                const txt = (g.titulo + " " + g.desc).toLowerCase();
+                return KEYWORDS[cat].some(k => txt.includes(k));
+            });
+            renderJuegos(juegosMostrados, 'games-container');
+        }
+
+        function filtrarJuegos() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            renderJuegos(DATABASE_JUEGOS.filter(g => g.titulo.toLowerCase().includes(q)), 'games-container');
+        }
+
+        function toggleFav(t) {
+            if(favoritos.includes(t)) favoritos = favoritos.filter(x => x !== t);
+            else favoritos.push(t);
+            localStorage.setItem('tito_favs_pro', JSON.stringify(favoritos));
+            if(document.getElementById('view-favs').classList.contains('active')) {
+                renderJuegos(DATABASE_JUEGOS.filter(g => favoritos.includes(g.titulo)), 'favs-container');
+            } else {
+                filtrarJuegos(); 
+            }
+        }
+
+        function getProxyImg(url) {
+            if(url.startsWith('http') && !url.includes('placeholder')) return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=200&h=300&fit=cover&output=jpg`;
+            return url;
+        }
+
         function verVideo(url) {
             document.getElementById('video-frame').src = url;
             document.getElementById('video-modal').style.display = 'flex';
@@ -197,59 +307,13 @@
             document.getElementById('video-frame').src = "";
             document.getElementById('video-modal').style.display = 'none';
         }
-        function getProxyImg(url) {
-            if (url.startsWith('http') && !url.includes('placeholder')) {
-                return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=200&h=300&fit=cover&output=jpg`;
-            }
-            return url;
-        }
-        function filtrarCategoria(cat) {
-            categoriaActual = cat;
-            document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            if (cat === 'Todo') juegosMostrados = DATABASE_JUEGOS;
-            else {
-                const palabras = KEYWORDS[cat];
-                juegosMostrados = DATABASE_JUEGOS.filter(game => {
-                    const txt = (game.titulo + " " + game.desc).toLowerCase();
-                    return palabras.some(p => txt.includes(p));
-                });
-            }
-            renderJuegos(juegosMostrados, 'games-container');
-        }
-        function filtrarJuegos() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const listaBase = categoriaActual === 'Todo' ? DATABASE_JUEGOS : juegosMostrados;
-            renderJuegos(listaBase.filter(g => g.titulo.toLowerCase().includes(q)), 'games-container');
-        }
-        function toggleFav(titulo) {
-            if (favoritos.includes(titulo)) favoritos = favoritos.filter(t => t !== titulo);
-            else favoritos.push(titulo);
-            localStorage.setItem('tito_favs_pro', JSON.stringify(favoritos));
-            if (document.getElementById('view-games').classList.contains('active')) filtrarJuegos();
-            else cargarFavoritos();
-        }
-        function cargarFavoritos() {
-            renderJuegos(DATABASE_JUEGOS.filter(g => favoritos.includes(g.titulo)), 'favs-container');
-        }
-        function cambiarTab(tab, element) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const seccion = document.getElementById('view-' + tab);
-            if (seccion) seccion.classList.add('active');
-            if (element) element.classList.add('active');
-            if (tab === 'favs') cargarFavoritos();
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-        function descargar(cmd) { 
-            if(tg) { tg.sendData(cmd); tg.close(); }
-            else { alert("Comando enviado: " + cmd + " (Solo funciona en Telegram)"); }
-        }
-        function comprar(item) { 
-            if(tg) { tg.sendData(`/comprar ${item}`); tg.close(); }
-            else { alert("Comprar: " + item); }
+
+        function enviar(cmd) {
+            if (tg) { tg.sendData(cmd); tg.close(); }
+            else { alert("Telegram WebApp no detectada. Comando: " + cmd); }
         }
 
-        // --- ARRANCAR ---
         init();
     </script>
+</body>
+</html>
