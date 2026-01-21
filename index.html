@@ -1,151 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TITOMX STORE ULTIMATE</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="config.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <style>
-        :root { --primary: #00e5ff; --bg: #0a0a0a; --card: #141414; --text: #fff; --gray: #aaa; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0 0 70px 0; -webkit-tap-highlight-color: transparent; }
-        
-        /* HEADER Y BUSCADOR */
-        .header { position: sticky; top: 0; background: rgba(10,10,10,0.95); z-index: 100; padding: 15px; backdrop-filter: blur(10px); border-bottom: 1px solid #222; }
-        .logo { text-align: center; font-weight: 900; font-size: 24px; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
-        .logo span { color: var(--primary); }
-        .search-bar { width: 100%; background: #222; border: 1px solid #333; padding: 12px 15px; border-radius: 30px; color: white; font-size: 14px; outline: none; transition: 0.3s; text-align: center; }
-        .search-bar:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
-
-        /* CARRUSEL DESTACADOS */
-        .featured-container { padding: 15px; }
-        .swiper { width: 100%; height: 220px; border-radius: 12px; overflow: hidden; }
-        .swiper-slide { position: relative; background-size: cover; background-position: center; }
-        .slide-content { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 20px 15px; box-sizing: border-box; }
-        .slide-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .slide-badge { background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-
-        /* CATEGORIAS */
-        .categories { display: flex; overflow-x: auto; padding: 10px 15px; gap: 10px; scrollbar-width: none; }
-        .categories::-webkit-scrollbar { display: none; }
-        .cat-pill { background: #222; padding: 8px 16px; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; transition: 0.2s; border: 1px solid #333; }
-        .cat-pill.active { background: var(--primary); color: #000; font-weight: bold; border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
-
-        /* SECCIONES */
-        .view-section { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .section-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-
-        /* TARJETAS DE JUEGOS */
-        .game-card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 15px; display: flex; gap: 15px; position: relative; border: 1px solid #222; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .game-img { width: 90px; height: 130px; object-fit: cover; border-radius: 8px; background: #222; }
-        .game-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        h3 { margin: 0 0 5px 0; font-size: 16px; font-weight: bold; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .meta { color: var(--primary); font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .desc { font-size: 11px; color: var(--gray); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        .actions { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-base { flex: 1; border: none; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
-        .btn-dl { background: linear-gradient(135deg, var(--primary), #0088cc); color: black; }
-        .btn-video { background: #333; color: white; border: 1px solid #444; }
-        .btn-fav { width: 36px; flex: none; background: #333; border: 1px solid #444; color: #666; font-size: 16px; }
-        .btn-fav.is-fav { color: #ff4757; border-color: #ff4757; background: rgba(255, 71, 87, 0.1); }
-        .btn-base:active { transform: scale(0.97); }
-
-        /* MODAL DE VIDEO */
-        #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
-        .video-container { width: 90%; max-width: 600px; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary); }
-        .close-video { margin-top: 20px; background: none; border: 2px solid white; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
-
-        /* TIENDA */
-        .store-grid { display: grid; grid-template-columns: repeat(2, 1.0fr); gap: 15px; }
-        .store-item { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; }
-        .store-img { width: 100%; height: 120px; object-fit: cover; }
-        .store-info { padding: 10px; }
-        .store-title { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
-        .store-price { color: var(--primary); font-weight: bold; font-size: 16px; }
-        .btn-buy { width: 100%; background: var(--primary); border: none; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; color: black;}
-
-        /* BARRA NAVEGACION INFERIOR */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(20,20,20,0.98); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #222; z-index: 1000; backdrop-filter: blur(10px); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-        .nav-item { color: #666; text-align: center; font-size: 10px; cursor: pointer; flex: 1; transition: 0.3s; }
-        .nav-item i { font-size: 20px; margin-bottom: 5px; display: block; }
-        .nav-item.active { color: var(--primary); transform: translateY(-2px); }
-    </style>
-</head>
-<body>
-
-    <div id="video-modal">
-        <div class="video-container">
-            <iframe id="video-frame" width="100%" height="100%" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-        <button class="close-video" onclick="cerrarVideo()"><i class="fas fa-times"></i> CERRAR TRAILER</button>
-    </div>
-
-    <div id="view-games" class="view-section active" style="padding: 0;">
-        <div class="header">
-            <div class="logo">TITOMX STORE</div> <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Buscar..." onkeyup="filtrarJuegos()">
-        </div>
-        
-        <div class="featured-container">
-            <div class="swiper">
-                <div class="swiper-wrapper" id="featured-wrapper"></div>
-                <div class="swiper-pagination"></div>
-            </div>
-        </div>
-        
-        <div class="categories" id="cat-container">
-            <div class="cat-pill active" onclick="filtrarCategoria('Todo')">🔥 Todo</div>
-            <div class="cat-pill" onclick="filtrarCategoria('Accion')">⚔️ Acción</div>
-            <div class="cat-pill" onclick="filtrarCategoria('Aventura')">🗺️ Aventura</div>
-            <div class="cat-pill" onclick="filtrarCategoria('Deportes')">⚽ Deportes</div>
-            <div class="cat-pill" onclick="filtrarCategoria('Estrategia')">🧠 Estrategia</div>
-            <div class="cat-pill" onclick="filtrarCategoria('Carreras')">🏎️ Carreras</div>
-            <div class="cat-pill" onclick="filtrarCategoria('Simulacion')">🏗️ Simulación</div>
-        </div>
-
-        <div id="games-container" style="padding: 15px;"></div>
-    </div>
-
-    <div id="view-store" class="view-section">
-        <div class="section-title"><i class="fas fa-shopping-cart" style="color: var(--primary);"></i> Tienda Oficial</div>
-        <p style="color: #888; font-size: 12px; margin-bottom: 20px;">Artículos exclusivos. Pagos seguros.</p>
-        <div class="store-grid" id="store-container"></div>
-    </div>
-
-    <div id="view-favs" class="view-section">
-        <div class="section-title"><i class="fas fa-heart" style="color: var(--primary);"></i> Mis Favoritos</div>
-        <div id="favs-container"></div>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="cambiarTab('games', this)">
-            <i class="fas fa-gamepad"></i> Juegos
-        </div>
-         <div class="nav-item" onclick="cambiarTab('store', this)">
-            <i class="fas fa-store"></i> Tienda
-        </div>
-        <div class="nav-item" onclick="cambiarTab('favs', this)">
-            <i class="fas fa-heart"></i> Favoritos
-        </div>
-    <div id="view-series" class="view-section">
-        <div class="section-title"><i class="fas fa-tv" style="color: var(--primary);"></i> Series TV</div>
-        <div id="series-container" class="store-grid"></div>
-    </div>
-
-    <div id="view-novelas" class="view-section">
-        <div class="section-title"><i class="fas fa-book-open" style="color: var(--primary);"></i> Novelas</div>
-        <div id="novelas-container" class="store-grid"></div>
-    </div>
-    </div>
-
-    <script src="games.js"></script> 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    
-    <script>
+<script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
@@ -164,40 +17,18 @@
         let categoriaActual = 'Todo';
         let swiper;
 
-        function init() {
-            // 1. APLICAR CONFIGURACIÓN DEL PANEL
-            if (typeof TITO_CONFIG !== 'undefined') {
-                document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
-                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
-                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
-                
-                renderTienda();
-                renderExtra('series', 'series-container');   
-                renderExtra('novelas', 'novelas-container'); 
-            } else {
-                console.log("⚠️ Configuración no cargada.");
-            }
-
-            // 2. CARGAR JUEGOS
-            if (typeof DATABASE_JUEGOS !== 'undefined') {
-                juegosMostrados = DATABASE_JUEGOS;
-                renderDestacados();
-                renderJuegos(juegosMostrados, 'games-container');
-            } else {
-                document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red'>⚠️ Error: Sube games.js</p>";
-            }
-        }
+        // --- FUNCIONES DE RENDERIZADO (DEFINIR PRIMERO) ---
 
         function renderTienda() {
             const container = document.getElementById('store-container');
             container.innerHTML = "";
             
-            if (TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
+            if (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
                 TITO_CONFIG.tienda.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'store-item';
                     div.innerHTML = `
-                        <img src="${item.imagen}" class="store-img">
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150'">
                         <div class="store-info">
                             <div class="store-title">${item.nombre}</div>
                             <div class="store-price" style="color:${TITO_CONFIG.color_principal}">${item.precio}</div>
@@ -207,11 +38,35 @@
                     container.appendChild(div);
                 });
             } else {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>No hay productos aún.</p>";
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>Tienda vacía.</p>";
             }
         }
 
-        // --- FUNCIONES DE JUEGOS ---
+        function renderExtra(tipo, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            
+            const lista = (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
+            
+            if (lista.length > 0) {
+                lista.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'store-item'; 
+                    div.innerHTML = `
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'">
+                        <div class="store-info">
+                            <div class="store-title">${item.titulo}</div>
+                            <div class="store-price" style="color:#aaa; font-size:11px">${item.info}</div>
+                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>Próximamente...</p>";
+            }
+        }
+
         function renderDestacados() {
             const wrapper = document.getElementById('featured-wrapper');
             const destacados = DATABASE_JUEGOS.filter(g => g.destacado === true).slice(0, 5);
@@ -250,6 +105,11 @@
             container.innerHTML = "";
             const fragment = document.createDocumentFragment();
 
+            if(lista.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#666; padding:20px'>No se encontraron juegos.</p>";
+                return;
+            }
+
             lista.forEach(game => {
                 const isFav = favoritos.includes(game.titulo);
                 let imgUrl = getProxyImg(game.imagen);
@@ -278,7 +138,34 @@
             container.appendChild(fragment);
         }
 
-        // --- UTILIDADES Y VIDEO ---
+        // --- INICIALIZACIÓN (DESPUÉS DE DEFINIR TODO) ---
+        function init() {
+            console.log("Iniciando TitoMX...");
+
+            // 1. Aplicar Configuración
+            if (typeof TITO_CONFIG !== 'undefined') {
+                document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
+                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
+                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
+                
+                renderTienda();
+                renderExtra('series', 'series-container');   
+                renderExtra('novelas', 'novelas-container'); 
+            } else {
+                console.log("⚠️ Configuración no cargada.");
+            }
+
+            // 2. Cargar Juegos
+            if (typeof DATABASE_JUEGOS !== 'undefined') {
+                juegosMostrados = DATABASE_JUEGOS;
+                renderDestacados();
+                renderJuegos(juegosMostrados, 'games-container');
+            } else {
+                document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red'>⚠️ Error: Sube games.js</p>";
+            }
+        }
+
+        // --- UTILIDADES ---
         function verVideo(url) {
             document.getElementById('video-frame').src = url;
             document.getElementById('video-modal').style.display = 'flex';
@@ -293,8 +180,6 @@
             }
             return url;
         }
-
-        // --- FILTROS ---
         function filtrarCategoria(cat) {
             categoriaActual = cat;
             document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
@@ -314,8 +199,6 @@
             const listaBase = categoriaActual === 'Todo' ? DATABASE_JUEGOS : juegosMostrados;
             renderJuegos(listaBase.filter(g => g.titulo.toLowerCase().includes(q)), 'games-container');
         }
-
-        // --- NAVEGACIÓN Y FAVORITOS ---
         function toggleFav(titulo) {
             if (favoritos.includes(titulo)) favoritos = favoritos.filter(t => t !== titulo);
             else favoritos.push(titulo);
@@ -336,35 +219,7 @@
         }
         function descargar(cmd) { tg.sendData(cmd); tg.close(); }
         function comprar(item) { tg.sendData(`/comprar ${item}`); tg.close(); }
-        
-        // --- FUNCIÓN PARA CARGAR SERIES Y NOVELAS ---
-        function renderExtra(tipo, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = "";
-            
-            // Verificamos si existe la lista en la config (config.js)
-            // TITO_CONFIG['series'] o TITO_CONFIG['novelas']
-            const lista = (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
-            
-            if (lista.length > 0) {
-                lista.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'store-item'; // Reusamos el diseño de la tienda
-                    div.innerHTML = `
-                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'">
-                        <div class="store-info">
-                            <div class="store-title">${item.titulo}</div>
-                            <div class="store-price" style="color:#aaa; font-size:11px">${item.info}</div>
-                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER AHORA</button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } else {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>Próximamente...</p>";
-            }
-        }
+
+        // --- ARRANCAR ---
         init();
     </script>
-</body>
-</html>
