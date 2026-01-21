@@ -20,6 +20,8 @@ const DATABASE_JUEGOS = [
   {
     "titulo": "The Sims 4",
     "imagen": "https://www.gamestorrents.app/wp-content/uploads/2026/01/The-Sims-4-pc-free-download.jpg",
+    // 👇 AQUÍ PUSE TU LINK NUEVO 👇
+    "banner": "https://p4.wallpaperbetter.com/wallpaper/368/820/976/sims-4-sims-simscity-the-sims-4-wallpaper-preview.jpg", 
     "info": "TITOMX.STORE | 1.71 GBs",
     "desc": "Descargar The Sims 4 para PC por torrent gratis. Da rienda suelta a tu imaginación...",
     "comando": "/game The Sims 4",
@@ -388,7 +390,7 @@ const DATABASE_JUEGOS = [
     "titulo": "Farmer’s Life",
     "imagen": "https://www.gamestorrents.app/wp-content/uploads/2025/12/Farmers-Life-pc-free-download.jpg",
     "info": "TITOMX.STORE | 4.66 GBs",
-    "desc": "Descargar Farmer's Life para PC por torrent gratis. 🌾 \"Farmer's Life\" - ¡Libera al granjero que llevas dentro! 🚜 Sumérgete en el encanto rústico de la vida rural en \"Farmer's Life\", donde experimentarás la...",
+    "desc": "Descargar Farmers Life para PC gratis. Libera al granjero que llevas dentro y sumérgete en el encanto rústico...",
     "comando": "/game Farmer’s Life"
   },
   {
@@ -7189,11 +7191,11 @@ const DATABASE_JUEGOS = [
     "comando": "/game Backyard Boxing"
   },
   {
-    "titulo": "FAIRY TAIL 2 – Bonus Feature «Arena»",
-    "imagen": "https://www.gamestorrents.app/wp-content/uploads/2025/02/FAIRY-TAIL-2-pc-free-download.jpg",
-    "info": "TITOMX.STORE | 14.43 GBs",
-    "desc": "Descargar FAIRY TAIL 2 - Bonus Feature \"Arena\" para PC por torrent gratis. \"FAIRY TAIL 2\" es un nuevo RPG basado en la popular serie de fantasía y combates mágicos de manga y anime \"FAIRY TAIL\", con fans en todo el mundo y más de...",
-    "comando": "/game FAIRY TAIL 2 – Bonus Feature «Arena»"
+    "titulo": "FAIRY TAIL 2",
+    "imagen": "https://www.gamestorrents.app/wp-content/uploads/2024/12/FAIRY-TAIL-2-pc-free-download.jpg",
+    "info": "TITOMX.STORE | 14.33 GBs",
+    "desc": "Descargar FAIRY TAIL 2 para PC por torrent gratis. Un nuevo RPG basado en la popular serie de fantasía...",
+    "comando": "/game FAIRY TAIL 2"
   },
   {
     "titulo": "Nightingale",
@@ -13980,9 +13982,9 @@ const DATABASE_JUEGOS = [
   },
   {
     "titulo": "Corsairs Legacy – Pirate Action RPG & Sea Battles",
-    "imagen": "https://www.gamestorrents.app/wp-content/uploads/2024/02/Corsairs-Legacy-pc-free-download.jpg",
-    "info": "TITOMX.STORE | 10.66 GBs",
-    "desc": "Descargar Corsairs Legacy - Pirate Action RPG & Sea Battles para PC por torrent gratis. Prepárate para una gran aventura basada en una historia para un jugador en \"Corsairs Legacy\", el juego en el que encarnas a Rufus Monroe, un aventurero...",
+    "imagen": "https://www.gamestorrents.app/wp-content/uploads/2025/08/Corsairs-Legacy-pc-free-download.jpg",
+    "info": "TITOMX.STORE | 10.11 GBs",
+    "desc": "Descargar Corsairs Legacy. Prepárate para una gran aventura basada en una historia para un jugador...",
     "comando": "/game Corsairs Legacy – Pirate Action RPG & Sea Battles"
   },
   {
@@ -14917,11 +14919,11 @@ const DATABASE_JUEGOS = [
     "comando": "/game Automobilista 2 – Historical Track Pack Pt2"
   },
   {
-    "titulo": "My Time at Sandrock",
-    "imagen": "https://www.gamestorrents.app/wp-content/uploads/2023/11/My-Time-at-Sandrock-pc-free-download-1.jpg",
-    "info": "TITOMX.STORE | 13.56 GBs",
-    "desc": "Descargar My Time at Sandrock para PC por torrent gratis. My Time at Sandrock-Viaja a la desértica comunidad de Sandrock y asume el papel de un Constructor principiante. Utiliza tu confiable juego de herramientas...",
-    "comando": "/game My Time at Sandrock"
+    "titulo": "My Time at Sandrock – Love Chronicles",
+    "imagen": "https://www.gamestorrents.app/wp-content/uploads/2024/11/My-Time-at-Sandrock-pc-free-download.jpg",
+    "info": "TITOMX.STORE | 13.96 GBs",
+    "desc": "Descargar My Time at Sandrock. El DLC Love Chronicles aporta grandes cantidades de romanticismo...",
+    "comando": "/game My Time at Sandrock – Love Chronicles"
   },
   {
     "titulo": "For The King II",
