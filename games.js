@@ -20,7 +20,7 @@ const DATABASE_JUEGOS = [
   {
     "titulo": "The Sims 4",
     "imagen": "https://www.gamestorrents.app/wp-content/uploads/2026/01/The-Sims-4-pc-free-download.jpg",
-    "banner": "https://c4.wallpaperflare.com/wallpaper/176/684/14/sims-4-sims-simscity-the-sims-4-wallpaper-preview.jpg", 
+    "banner": "https://p4.wallpaperbetter.com/wallpaper/368/820/976/sims-4-sims-simscity-the-sims-4-wallpaper-preview.jpg", 
     "info": "TITOMX.STORE | 1.71 GBs",
     "desc": "Descargar The Sims 4 para PC por torrent gratis. Da rienda suelta a tu imaginación...",
     "comando": "/game The Sims 4",
