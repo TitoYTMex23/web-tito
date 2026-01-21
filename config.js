@@ -1,42 +1,245 @@
-const TITO_CONFIG = {
-    "color_principal": "#00e5ff",
-    "titulo_web": "TITOMX PRO",
-    "mensaje_bienvenida": "¿Qué vamos a ver hoy?",
-    "estilo_tarjetas": "normal",
+<script>
+        // 1. INICIALIZAR TELEGRAM (CON PROTECCIÓN)
+        let tg = null;
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+            } else {
+                console.log("⚠️ Modo Navegador (Fuera de Telegram)");
+            }
+        } catch (e) { console.log(e); }
 
-    // --- TIENDA ---
-    "tienda": [
-        { 
-            "nombre": "VIP 30 Días", 
-            "precio": "$1000 CUP", 
-            "imagen": "https://via.placeholder.com/300x200?text=VIP+Gold", 
-            "comando": "VIP 30 Dias" 
-        }
-    ],
+        // 🧠 INTELIGENCIA DE CATEGORÍAS
+        const KEYWORDS = {
+            'Accion': ['war', 'fight', 'duty', 'battle', 'combat', 'kill', 'dead', 'gun', 'sniper', 'evil', 'resident', 'devil', 'crysis', 'halo', 'doom', 'shooter'],
+            'Aventura': ['tomb', 'raider', 'uncharted', 'assassin', 'creed', 'god', 'zelda', 'horizon', 'stray', 'lego', 'prince', 'journey', 'hogwarts'],
+            'Deportes': ['fifa', 'pes', 'nba', 'soccer', 'football', 'wwe', 'ufc', 'tennis', 'golf', 'skate', 'f1', 'manager', 'fc 24'],
+            'Estrategia': ['age of', 'empire', 'civilization', 'warcraft', 'starcraft', 'total war', 'command', 'tycoon', 'city', 'anno', 'crusader'],
+            'Carreras': ['need for speed', 'forza', 'gran turismo', 'dirt', 'rally', 'moto', 'car', 'driver', 'burnout', 'asphalt', 'hot wheels'],
+            'Simulacion': ['sims', 'simulator', 'truck', 'flight', 'farm', 'mechanic', 'train', 'bus', 'house flipper']
+        };
 
-    // --- SERIES (NUEVO) ---
-    "series": [
-        { 
-            "titulo": "Breaking Bad", 
-            "imagen": "https://m.media-amazon.com/images/M/MV5BMMTU5MjgyOTA4NF5BMl5BanBnXkFtZTgwNzE3Mjg5MTE@._V1_FMjpg_UX1000_.jpg", // Foto vertical tipo poster
-            "info": "5 Temporadas | Full HD", 
-            "comando": "/serie breaking" 
-        },
-        { 
-            "titulo": "The Last of Us", 
-            "imagen": "https://m.media-amazon.com/images/M/MV5BZGUzYTI3M2EtZmM0Yy00NGUyLWI4ODEtN2Q3ZGJlYzhhZjU3XkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg", 
-            "info": "Temp 1 | Latino", 
-            "comando": "/serie lastofus" 
-        }
-    ],
+        let juegosMostrados = [];
+        let favoritos = JSON.parse(localStorage.getItem('tito_favs_pro')) || [];
+        let categoriaActual = 'Todo';
+        let swiper;
 
-    // --- NOVELAS (NUEVO) ---
-    "novelas": [
-        { 
-            "titulo": "Pasión de Gavilanes", 
-            "imagen": "https://es.web.img3.acsta.net/pictures/14/03/17/10/20/509671.jpg", 
-            "info": "Completa | 1080p", 
-            "comando": "/novela pasion" 
+        // --- FUNCIÓN INIT (LA JEFA) ---
+        function init() {
+            console.log("🚀 Iniciando TitoMX...");
+
+            // A) CARGAR CONFIGURACIÓN (Panel Admin)
+            if (typeof TITO_CONFIG !== 'undefined') {
+                document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
+                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
+                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
+                
+                renderTienda();
+                renderExtra('series', 'series-container');   
+                renderExtra('novelas', 'novelas-container'); 
+            } else {
+                console.log("⚠️ No se encontró config.js");
+            }
+
+            // B) CARGAR JUEGOS (Base de Datos)
+            if (typeof DATABASE_JUEGOS !== 'undefined') {
+                juegosMostrados = DATABASE_JUEGOS;
+                renderDestacados();
+                renderJuegos(juegosMostrados, 'games-container');
+            } else {
+                document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>⚠️ Error: Sube el archivo games.js</p>";
+            }
         }
-    ]
-};
+
+        // --- FUNCIONES DE RENDERIZADO ---
+
+        function renderTienda() {
+            const container = document.getElementById('store-container');
+            if(!container) return;
+            container.innerHTML = "";
+            
+            if (TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
+                TITO_CONFIG.tienda.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'store-item';
+                    div.innerHTML = `
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/300?text=Producto'">
+                        <div class="store-info">
+                            <div class="store-title">${item.nombre}</div>
+                            <div class="store-price" style="color:${TITO_CONFIG.color_principal}">${item.precio}</div>
+                            <button class="btn-buy" style="background:${TITO_CONFIG.color_principal}" onclick="comprar('${item.comando}')">COMPRAR</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>No hay productos.</p>";
+            }
+        }
+
+        function renderExtra(tipo, containerId) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            container.innerHTML = "";
+            
+            const lista = (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
+            
+            if (lista.length > 0) {
+                lista.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'store-item'; 
+                    div.innerHTML = `
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/300?text=Sin+Foto'">
+                        <div class="store-info">
+                            <div class="store-title">${item.titulo}</div>
+                            <div class="store-price" style="color:#aaa; font-size:11px">${item.info}</div>
+                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER AHORA</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666; font-size:12px;'>Próximamente...</p>";
+            }
+        }
+
+        function renderDestacados() {
+            const wrapper = document.getElementById('featured-wrapper');
+            if(!wrapper) return;
+            const destacados = DATABASE_JUEGOS.filter(g => g.destacado === true).slice(0, 5);
+            
+            if (destacados.length === 0) {
+                document.querySelector('.featured-container').style.display = 'none';
+                return;
+            }
+
+            destacados.forEach(game => {
+                let imgUrl = getProxyImg(game.imagen);
+                const slide = document.createElement('div');
+                slide.className = 'swiper-slide';
+                slide.style.backgroundImage = `url('${imgUrl}')`;
+                slide.innerHTML = `
+                    <div class="slide-content">
+                        <span class="slide-badge">DESTACADO</span>
+                        <div class="slide-title">${game.titulo}</div>
+                        <button class="btn-base btn-dl" style="width: auto; padding: 8px 20px;" onclick="descargar('${game.comando}')">
+                            <i class="fas fa-rocket"></i> DESCARGAR AHORA
+                        </button>
+                    </div>
+                `;
+                wrapper.appendChild(slide);
+            });
+
+            swiper = new Swiper('.swiper', {
+                slidesPerView: 1, spaceBetween: 10, loop: true,
+                autoplay: { delay: 3000, disableOnInteraction: false },
+                pagination: { el: '.swiper-pagination', clickable: true },
+            });
+        }
+
+        function renderJuegos(lista, containerId) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            container.innerHTML = "";
+            const fragment = document.createDocumentFragment();
+
+            if(lista.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#666; padding:20px'>No se encontraron resultados.</p>";
+                return;
+            }
+
+            lista.forEach(game => {
+                const isFav = favoritos.includes(game.titulo);
+                let imgUrl = getProxyImg(game.imagen);
+                const div = document.createElement('div');
+                div.className = 'game-card';
+                
+                let videoBtn = game.video ? `<button class="btn-base btn-video" onclick="verVideo('${game.video}')"><i class="fas fa-play-circle"></i> TRAILER</button>` : '';
+
+                div.innerHTML = `
+                    <img class="game-img" src="${imgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/150?text=Error'">
+                    <div class="game-info">
+                        <div>
+                            <h3>${game.titulo}</h3>
+                            <div class="meta">${game.info}</div>
+                            <div class="desc">${game.desc}</div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-base btn-dl" onclick="descargar('${game.comando}')"><i class="fas fa-download"></i> BAJAR</button>
+                            ${videoBtn}
+                            <button class="btn-base btn-fav ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${game.titulo.replace(/'/g, "\\'")}')"><i class="fas ${isFav ? 'fa-heart' : 'fa-heart'}"></i></button>
+                        </div>
+                    </div>
+                `;
+                fragment.appendChild(div);
+            });
+            container.appendChild(fragment);
+        }
+
+        // --- UTILIDADES ---
+        function verVideo(url) {
+            document.getElementById('video-frame').src = url;
+            document.getElementById('video-modal').style.display = 'flex';
+        }
+        function cerrarVideo() {
+            document.getElementById('video-frame').src = "";
+            document.getElementById('video-modal').style.display = 'none';
+        }
+        function getProxyImg(url) {
+            if (url.startsWith('http') && !url.includes('placeholder')) {
+                return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=200&h=300&fit=cover&output=jpg`;
+            }
+            return url;
+        }
+        function filtrarCategoria(cat) {
+            categoriaActual = cat;
+            document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            if (cat === 'Todo') juegosMostrados = DATABASE_JUEGOS;
+            else {
+                const palabras = KEYWORDS[cat];
+                juegosMostrados = DATABASE_JUEGOS.filter(game => {
+                    const txt = (game.titulo + " " + game.desc).toLowerCase();
+                    return palabras.some(p => txt.includes(p));
+                });
+            }
+            renderJuegos(juegosMostrados, 'games-container');
+        }
+        function filtrarJuegos() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const listaBase = categoriaActual === 'Todo' ? DATABASE_JUEGOS : juegosMostrados;
+            renderJuegos(listaBase.filter(g => g.titulo.toLowerCase().includes(q)), 'games-container');
+        }
+        function toggleFav(titulo) {
+            if (favoritos.includes(titulo)) favoritos = favoritos.filter(t => t !== titulo);
+            else favoritos.push(titulo);
+            localStorage.setItem('tito_favs_pro', JSON.stringify(favoritos));
+            if (document.getElementById('view-games').classList.contains('active')) filtrarJuegos();
+            else cargarFavoritos();
+        }
+        function cargarFavoritos() {
+            renderJuegos(DATABASE_JUEGOS.filter(g => favoritos.includes(g.titulo)), 'favs-container');
+        }
+        function cambiarTab(tab, element) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const seccion = document.getElementById('view-' + tab);
+            if (seccion) seccion.classList.add('active');
+            if (element) element.classList.add('active');
+            if (tab === 'favs') cargarFavoritos();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+        function descargar(cmd) { 
+            if(tg) { tg.sendData(cmd); tg.close(); }
+            else { alert("Comando enviado: " + cmd + " (Solo funciona en Telegram)"); }
+        }
+        function comprar(item) { 
+            if(tg) { tg.sendData(`/comprar ${item}`); tg.close(); }
+            else { alert("Comprar: " + item); }
+        }
+
+        // --- ARRANCAR ---
+        init();
+    </script>
