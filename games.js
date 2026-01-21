@@ -38,7 +38,7 @@ const DATABASE_JUEGOS = [
     "comando": "/game Soulmask",
     "destacado": true,
     "video": "https://www.youtube.com/embed/S_Ua9dK2tQM?autoplay=1"
-  }
+  },
   
   {
     "titulo": "Anno 1800",
