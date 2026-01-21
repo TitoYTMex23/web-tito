@@ -1,55 +1,106 @@
-<script src="games.js"></script> <script>
-    // Inicializar Telegram
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo VIP</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 10px; }
+        .game-card { background: #1e1e1e; margin-bottom: 10px; padding: 10px; border-radius: 8px; display: flex; align-items: center; border: 1px solid #333; }
+        .game-card img { width: 70px; height: 100px; object-fit: cover; border-radius: 4px; margin-right: 15px; background: #333; }
+        .game-info { flex: 1; }
+        h3 { margin: 0 0 5px 0; font-size: 15px; color: #00ff88; }
+        p { margin: 0 0 10px 0; font-size: 12px; color: #aaa; }
+        button { background: #0088cc; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
+        /* Estilo para el reporte de errores en pantalla */
+        #debug-console { color: #ff5555; background: #2a0000; padding: 15px; border: 1px solid red; border-radius: 5px; margin-bottom: 20px; white-space: pre-wrap; display: none; }
+    </style>
+</head>
+<body>
 
-    const container = document.getElementById('games-container');
-    const loading = document.getElementById('loading');
+    <div id="debug-console"></div>
+    
+    <div id="loading" style="text-align:center; padding: 20px;">
+        ⏳ Cargando base de datos...
+    </div>
 
-    // Renderizar juegos (Versión optimizada)
-    function renderGames() {
-        if (loading) loading.style.display = 'none';
-        
-        // Cargamos solo los primeros 100 para probar rápido
-        const juegosMostrados = typeof DATABASE_JUEGOS !== 'undefined' ? DATABASE_JUEGOS.slice(0, 100) : [];
+    <div id="games-container"></div>
 
-        if (juegosMostrados.length === 0) {
-            container.innerHTML = "<p style='color:white; text-align:center;'>Error: No se cargó games.js</p>";
-            return;
+    <script>
+        // 1. CHIVATO DE ERRORES (Muestra el error en la pantalla del cel)
+        window.onerror = function(msg, url, line) {
+            const consoleBox = document.getElementById('debug-console');
+            document.getElementById('loading').style.display = 'none';
+            consoleBox.style.display = 'block';
+            consoleBox.innerHTML += `❌ ERROR CRÍTICO:\n${msg}\n\nEn archivo: ${url}\nLínea: ${line}\n\n`;
+            return false;
+        };
+    </script>
+
+    <script src="games.js"></script>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const container = document.getElementById('games-container');
+        const loading = document.getElementById('loading');
+        let visibleCount = 50;
+
+        function init() {
+            // Verificamos si games.js cargó bien
+            if (typeof DATABASE_JUEGOS === 'undefined') {
+                throw new Error("El archivo games.js no se pudo leer. Revisa si le falta una coma ',' o un corchete ']'.");
+            }
+
+            loading.style.display = 'none';
+            renderChunk(); // Cargamos los primeros 50
         }
 
-        juegosMostrados.forEach(game => {
-            const card = document.createElement('div');
-            card.className = 'game-card';
-            // Usamos un onclick directo y sencillo
-            card.innerHTML = `
-                <img src="${game.imagen}" onerror="this.src='https://via.placeholder.com/150?text=No+Img'">
-                <div class="game-info">
-                    <h3>${game.titulo}</h3>
-                    <button class="download-btn" onclick="enviarAlBot('${game.comando}')">
-                        DESCARGAR
-                    </button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
+        function renderChunk() {
+            const currentLen = container.children.length;
+            const chunk = DATABASE_JUEGOS.slice(currentLen, currentLen + visibleCount);
 
-    // Función del Botón con "Chivato"
-    function enviarAlBot(comando) {
-        // 1. Alerta visual en el celular
-        alert("Enviando: " + comando); 
-        
-        // 2. Enviar a Telegram
-        try {
-            tg.sendData(comando);
-            // No cerramos la web inmediatamente para que veas si sale el error
-        } catch (e) {
-            alert("Error enviando: " + e);
+            if (currentLen === 0 && chunk.length === 0) {
+                container.innerHTML = "<p style='text-align:center'>La lista está vacía.</p>";
+                return;
+            }
+
+            chunk.forEach(game => {
+                const div = document.createElement('div');
+                div.className = 'game-card';
+                
+                // Si la imagen falla, ponemos un color solido
+                const imgUrl = game.imagen || 'https://via.placeholder.com/150';
+                
+                div.innerHTML = `
+                    <img src="${imgUrl}" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==';">
+                    <div class="game-info">
+                        <h3>${game.titulo}</h3>
+                        <p>${game.info || 'PC Game'}</p>
+                        <button onclick="enviar('${game.comando}')">DESCARGAR</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
         }
-    }
 
-    // Arrancar
-    document.addEventListener('DOMContentLoaded', renderGames);
-</script>
+        function enviar(cmd) {
+            tg.sendData(cmd);
+            tg.close(); // Cierra la web al tocar
+        }
+
+        // Carga infinita al bajar
+        window.onscroll = function() {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                renderChunk();
+            }
+        };
+
+        // Arrancamos
+        init();
+    </script>
+</body>
+</html>
