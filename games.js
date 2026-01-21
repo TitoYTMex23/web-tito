@@ -20,7 +20,6 @@ const DATABASE_JUEGOS = [
   {
     "titulo": "The Sims 4",
     "imagen": "https://www.gamestorrents.app/wp-content/uploads/2026/01/The-Sims-4-pc-free-download.jpg",
-    "banner": "https://p4.wallpaperbetter.com/wallpaper/368/820/976/sims-4-sims-simscity-the-sims-4-wallpaper-preview.jpg", 
     "info": "TITOMX.STORE | 1.71 GBs",
     "desc": "Descargar The Sims 4 para PC por torrent gratis. Da rienda suelta a tu imaginación...",
     "comando": "/game The Sims 4",
@@ -40,7 +39,7 @@ const DATABASE_JUEGOS = [
     "info": "TITOMX.STORE | 1.44 GBs",
     "desc": "Descargar Quarantine Zone: The Last Check para PC por torrent gratis...",
     "comando": "/game Quarantine Zone: The Last Check"
-  },  /* <--- ¡COMA! */
+  },  /* <--- ¡AQUÍ FALTABA ESTA COMA! */
   {
     "titulo": "Car Dealer Simulator",
     "imagen": "https://www.gamestorrents.app/wp-content/uploads/2026/01/Car-Dealer-Simulator-pc-free-download-1.jpg",
