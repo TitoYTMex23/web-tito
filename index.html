@@ -165,43 +165,12 @@
         </div>
 
         <h2>🔥 Lo más buscado</h2>
-        <div class="games-grid">
-            <div class="game-card" onclick="copy('/game gta v')">
-                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/header.jpg" class="game-img">
-                <div class="game-info">
-                    <div class="game-title">GTA V</div>
-                    <div class="game-genre">Acción / Mundo Abierto</div>
-                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
-                </div>
-            </div>
-            <div class="game-card" onclick="copy('/game resident evil 4')">
-                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2050650/header.jpg" class="game-img">
-                <div class="game-info">
-                    <div class="game-title">Resident Evil 4</div>
-                    <div class="game-genre">Terror / Remake</div>
-                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
-                </div>
-            </div>
-            <div class="game-card" onclick="copy('/game fc 24')">
-                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2195250/header.jpg" class="game-img">
-                <div class="game-info">
-                    <div class="game-title">EA SPORTS FC 24</div>
-                    <div class="game-genre">Deportes</div>
-                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
-                </div>
-            </div>
-            <div class="game-card" onclick="copy('/game elden ring')">
-                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg" class="game-img">
-                <div class="game-info">
-                    <div class="game-title">Elden Ring</div>
-                    <div class="game-genre">RPG / Souls</div>
-                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
-                </div>
-            </div>
+        <div class="games-grid" id="contenedor-juegos">
+            <p style="color:#666; font-size:0.8em; grid-column: span 2; text-align:center;">
+                Cargando catálogo...
+            </p>
         </div>
-    </div>
-
-    <div id="tutorials" class="section">
+    </div> <div id="tutorials" class="section">
         <h2>📚 Guías Interactivas</h2>
         
         <div class="tutorial-card">
@@ -262,25 +231,53 @@
         </div>
     </div>
 
-    <script>
+    <script src="games.js"></script> <script>
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
 
-        // CAMBIAR PESTAÑAS
+        // 1. DIBUJAR JUEGOS DESDE LA BASE DE DATOS
+        const contenedor = document.getElementById('contenedor-juegos');
+        
+        if (typeof DATABASE_JUEGOS !== 'undefined' && DATABASE_JUEGOS.length > 0) {
+            contenedor.innerHTML = ""; // Limpiar mensaje de carga
+            DATABASE_JUEGOS.forEach(juego => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.onclick = () => copy(juego.comando);
+                
+                // Usar una imagen por defecto si falla la original
+                const imgUrl = juego.imagen || 'https://via.placeholder.com/150x200?text=GAME';
+                
+                card.innerHTML = `
+                    <img src="${imgUrl}" class="game-img" loading="lazy" onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                    <div class="game-info">
+                        <div class="game-title">${juego.titulo}</div>
+                        <div class="game-genre">${juego.info}</div>
+                        <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+        } else {
+            // Si no hay archivo games.js o está vacío
+            contenedor.innerHTML = `
+                <div style="grid-column: span 2; text-align:center; padding:20px; color:#888;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:2em; margin-bottom:10px; color:#ffaa00"></i><br>
+                    Actualizando catálogo...<br>
+                    <span style="font-size:0.8em">(Corre el generador.py en la VPS)</span>
+                </div>
+            `;
+        }
+
+        // FUNCIONES DE SIEMPRE
         function switchTab(tabId, element) {
-            // Ocultar todas las secciones
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-            // Quitar activo del menú
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            // Mostrar la nueva
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
-            
             Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
 
-        // COPIAR TEXTO
         function copy(text) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast(`Copiado: ${text}`);
@@ -288,7 +285,6 @@
             });
         }
 
-        // MOSTRAR TOAST
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.textContent = msg;
