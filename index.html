@@ -172,9 +172,10 @@
                 document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
                 
                 renderTienda();
-                // 👇 ESTO ES LO NUEVO QUE FALTABA 👇
                 renderExtra('series', 'series-container');   
                 renderExtra('novelas', 'novelas-container'); 
+            } else {
+                console.log("⚠️ Configuración no cargada.");
             }
 
             // 2. CARGAR JUEGOS
@@ -185,11 +186,6 @@
             } else {
                 document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red'>⚠️ Error: Sube games.js</p>";
             }
-        
-            }
-            juegosMostrados = DATABASE_JUEGOS;
-            renderDestacados();
-            renderJuegos(juegosMostrados, 'games-container');
         }
 
         function renderTienda() {
