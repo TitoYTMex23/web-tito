@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>TITOMX STORE ULTIMATE</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="config.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <style>
@@ -13,12 +14,12 @@
         
         /* HEADER Y BUSCADOR */
         .header { position: sticky; top: 0; background: rgba(10,10,10,0.95); z-index: 100; padding: 15px; backdrop-filter: blur(10px); border-bottom: 1px solid #222; }
-        .logo { text-align: center; font-weight: 900; font-size: 24px; letter-spacing: 2px; margin-bottom: 10px; }
+        .logo { text-align: center; font-weight: 900; font-size: 24px; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
         .logo span { color: var(--primary); }
         .search-bar { width: 100%; background: #222; border: 1px solid #333; padding: 12px 15px; border-radius: 30px; color: white; font-size: 14px; outline: none; transition: 0.3s; text-align: center; }
         .search-bar:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
 
-        /* CARRUSEL DESTACADOS (Estilo Compu-PC) */
+        /* CARRUSEL DESTACADOS */
         .featured-container { padding: 15px; }
         .swiper { width: 100%; height: 220px; border-radius: 12px; overflow: hidden; }
         .swiper-slide { position: relative; background-size: cover; background-position: center; }
@@ -86,14 +87,12 @@
 
     <div id="view-games" class="view-section active" style="padding: 0;">
         <div class="header">
-            <div class="logo">TITO<span>MX</span> STORE</div>
-            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ¿Qué quieres jugar hoy?..." onkeyup="filtrarJuegos()">
+            <div class="logo">TITOMX STORE</div> <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Buscar..." onkeyup="filtrarJuegos()">
         </div>
         
         <div class="featured-container">
             <div class="swiper">
-                <div class="swiper-wrapper" id="featured-wrapper">
-                    </div>
+                <div class="swiper-wrapper" id="featured-wrapper"></div>
                 <div class="swiper-pagination"></div>
             </div>
         </div>
@@ -113,26 +112,8 @@
 
     <div id="view-store" class="view-section">
         <div class="section-title"><i class="fas fa-shopping-cart" style="color: var(--primary);"></i> Tienda Oficial</div>
-        <p style="color: #888; font-size: 12px; margin-bottom: 20px;">Artículos exclusivos de TitoMX. Pagos vía Transfermóvil/Enzona.</p>
-        
-        <div class="store-grid" id="store-container">
-            <div class="store-item">
-                <img src="https://via.placeholder.com/300x200?text=Membresia+VIP" class="store-img">
-                <div class="store-info">
-                    <div class="store-title">Membresía VIP (30 Días)</div>
-                    <div class="store-price">$1000 CUP</div>
-                    <button class="btn-buy" onclick="comprar('VIP 30 Dias')">COMPRAR AHORA</button>
-                </div>
-            </div>
-             <div class="store-item">
-                <img src="https://via.placeholder.com/300x200?text=Disco+Duro" class="store-img">
-                <div class="store-info">
-                    <div class="store-title">Disco Lleno (1TB)</div>
-                    <div class="store-price">$5000 CUP</div>
-                    <button class="btn-buy" onclick="comprar('Disco 1TB')">COMPRAR AHORA</button>
-                </div>
-            </div>
-        </div>
+        <p style="color: #888; font-size: 12px; margin-bottom: 20px;">Artículos exclusivos. Pagos seguros.</p>
+        <div class="store-grid" id="store-container"></div>
     </div>
 
     <div id="view-favs" class="view-section">
@@ -159,7 +140,7 @@
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
-        // PALABRAS CLAVE PARA INTELIGENCIA ARTIFICIAL
+        // 🧠 INTELIGENCIA DE CATEGORÍAS
         const KEYWORDS = {
             'Accion': ['war', 'fight', 'duty', 'battle', 'combat', 'kill', 'dead', 'gun', 'sniper', 'evil', 'resident', 'devil', 'crysis', 'halo', 'doom', 'shooter'],
             'Aventura': ['tomb', 'raider', 'uncharted', 'assassin', 'creed', 'god', 'zelda', 'horizon', 'stray', 'lego', 'prince', 'journey', 'hogwarts'],
@@ -175,20 +156,53 @@
         let swiper;
 
         function init() {
+            // 1. APLICAR CONFIGURACIÓN DEL PANEL (Lo primero de todo)
+            if (typeof TITO_CONFIG !== 'undefined') {
+                document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
+                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
+                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
+                renderTienda(); // Cargar la tienda con datos del panel
+            } else {
+                console.log("⚠️ No se cargó config.js, usando valores por defecto.");
+            }
+
+            // 2. CARGAR JUEGOS
             if (typeof DATABASE_JUEGOS === 'undefined') {
                 document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red'>⚠️ Error: Sube games.js</p>";
                 return;
             }
             juegosMostrados = DATABASE_JUEGOS;
-            renderDestacados(); // Cargar el carrusel
+            renderDestacados();
             renderJuegos(juegosMostrados, 'games-container');
         }
 
-        // --- RENDERIZAR CARRUSEL SUPERIOR ---
+        function renderTienda() {
+            const container = document.getElementById('store-container');
+            container.innerHTML = "";
+            
+            if (TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
+                TITO_CONFIG.tienda.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'store-item';
+                    div.innerHTML = `
+                        <img src="${item.imagen}" class="store-img">
+                        <div class="store-info">
+                            <div class="store-title">${item.nombre}</div>
+                            <div class="store-price" style="color:${TITO_CONFIG.color_principal}">${item.precio}</div>
+                            <button class="btn-buy" style="background:${TITO_CONFIG.color_principal}" onclick="comprar('${item.comando}')">COMPRAR</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>No hay productos aún.</p>";
+            }
+        }
+
+        // --- FUNCIONES DE JUEGOS ---
         function renderDestacados() {
             const wrapper = document.getElementById('featured-wrapper');
-            // Filtramos los juegos que marcaste con "destacado: true" en games.js
-            const destacados = DATABASE_JUEGOS.filter(g => g.destacado === true).slice(0, 5); // Máximo 5
+            const destacados = DATABASE_JUEGOS.filter(g => g.destacado === true).slice(0, 5);
             
             if (destacados.length === 0) {
                 document.querySelector('.featured-container').style.display = 'none';
@@ -212,17 +226,13 @@
                 wrapper.appendChild(slide);
             });
 
-            // Iniciar SwiperJS
             swiper = new Swiper('.swiper', {
-                slidesPerView: 1,
-                spaceBetween: 10,
-                loop: true,
+                slidesPerView: 1, spaceBetween: 10, loop: true,
                 autoplay: { delay: 3000, disableOnInteraction: false },
                 pagination: { el: '.swiper-pagination', clickable: true },
             });
         }
 
-        // --- RENDERIZADO PRINCIPAL DE JUEGOS ---
         function renderJuegos(lista, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
@@ -231,19 +241,10 @@
             lista.forEach(game => {
                 const isFav = favoritos.includes(game.titulo);
                 let imgUrl = getProxyImg(game.imagen);
-
                 const div = document.createElement('div');
                 div.className = 'game-card';
                 
-                // Lógica de Botones: Si tiene video, muestra el botón de video
-                let videoBtn = '';
-                if (game.video) {
-                    videoBtn = `
-                        <button class="btn-base btn-video" onclick="verVideo('${game.video}')">
-                            <i class="fas fa-play-circle"></i> TRAILER
-                        </button>
-                    `;
-                }
+                let videoBtn = game.video ? `<button class="btn-base btn-video" onclick="verVideo('${game.video}')"><i class="fas fa-play-circle"></i> TRAILER</button>` : '';
 
                 div.innerHTML = `
                     <img class="game-img" src="${imgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/150?text=Error'">
@@ -254,13 +255,9 @@
                             <div class="desc">${game.desc}</div>
                         </div>
                         <div class="actions">
-                            <button class="btn-base btn-dl" onclick="descargar('${game.comando}')">
-                                <i class="fas fa-download"></i> BAJAR
-                            </button>
+                            <button class="btn-base btn-dl" onclick="descargar('${game.comando}')"><i class="fas fa-download"></i> BAJAR</button>
                             ${videoBtn}
-                            <button class="btn-base btn-fav ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${game.titulo.replace(/'/g, "\\'")}')">
-                                <i class="fas ${isFav ? 'fa-heart' : 'fa-heart'}"></i>
-                            </button>
+                            <button class="btn-base btn-fav ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${game.titulo.replace(/'/g, "\\'")}')"><i class="fas ${isFav ? 'fa-heart' : 'fa-heart'}"></i></button>
                         </div>
                     </div>
                 `;
@@ -269,7 +266,7 @@
             container.appendChild(fragment);
         }
 
-        // --- FUNCIONES DE VIDEO ---
+        // --- UTILIDADES Y VIDEO ---
         function verVideo(url) {
             document.getElementById('video-frame').src = url;
             document.getElementById('video-modal').style.display = 'flex';
@@ -278,15 +275,20 @@
             document.getElementById('video-frame').src = "";
             document.getElementById('video-modal').style.display = 'none';
         }
+        function getProxyImg(url) {
+            if (url.startsWith('http') && !url.includes('placeholder')) {
+                return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=200&h=300&fit=cover&output=jpg`;
+            }
+            return url;
+        }
 
-        // --- FILTROS E INTELIGENCIA ---
+        // --- FILTROS ---
         function filtrarCategoria(cat) {
             categoriaActual = cat;
             document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
             event.target.classList.add('active');
-            if (cat === 'Todo') {
-                juegosMostrados = DATABASE_JUEGOS;
-            } else {
+            if (cat === 'Todo') juegosMostrados = DATABASE_JUEGOS;
+            else {
                 const palabras = KEYWORDS[cat];
                 juegosMostrados = DATABASE_JUEGOS.filter(game => {
                     const txt = (game.titulo + " " + game.desc).toLowerCase();
@@ -295,22 +297,13 @@
             }
             renderJuegos(juegosMostrados, 'games-container');
         }
-
         function filtrarJuegos() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             const listaBase = categoriaActual === 'Todo' ? DATABASE_JUEGOS : juegosMostrados;
-            const filtrados = listaBase.filter(game => game.titulo.toLowerCase().includes(q));
-            renderJuegos(filtrados, 'games-container');
+            renderJuegos(listaBase.filter(g => g.titulo.toLowerCase().includes(q)), 'games-container');
         }
 
-        // --- UTILIDADES ---
-        function getProxyImg(url) {
-            if (url.startsWith('http') && !url.includes('placeholder')) {
-                return `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=200&h=300&fit=cover&output=jpg`;
-            }
-            return url;
-        }
-
+        // --- NAVEGACIÓN Y FAVORITOS ---
         function toggleFav(titulo) {
             if (favoritos.includes(titulo)) favoritos = favoritos.filter(t => t !== titulo);
             else favoritos.push(titulo);
@@ -318,13 +311,9 @@
             if (document.getElementById('view-games').classList.contains('active')) filtrarJuegos();
             else cargarFavoritos();
         }
-
         function cargarFavoritos() {
-            const listaFavs = DATABASE_JUEGOS.filter(g => favoritos.includes(g.titulo));
-            renderJuegos(listaFavs, 'favs-container');
+            renderJuegos(DATABASE_JUEGOS.filter(g => favoritos.includes(g.titulo)), 'favs-container');
         }
-
-        // --- NAVEGACIÓN Y ACCIONES ---
         function cambiarTab(tab, element) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -333,17 +322,8 @@
             if (tab === 'favs') cargarFavoritos();
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
-
-        function descargar(cmd) {
-            tg.sendData(cmd);
-            tg.close();
-        }
-        
-        function comprar(item) {
-            // Aquí luego conectaremos con el bot para pagar
-            tg.sendData(`/comprar ${item}`);
-            tg.close();
-        }
+        function descargar(cmd) { tg.sendData(cmd); tg.close(); }
+        function comprar(item) { tg.sendData(`/comprar ${item}`); tg.close(); }
 
         init();
     </script>
