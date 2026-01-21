@@ -1,99 +1,102 @@
-import requests
-from bs4 import BeautifulSoup
-import json
-import urllib.parse
-import time
-import re
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITOMX STORE</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #0f0f0f; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; }
+        .game-card { 
+            background: #1a1a1a; 
+            margin-bottom: 12px; 
+            padding: 10px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: start; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+        }
+        .game-img { 
+            width: 80px; 
+            height: 110px; 
+            object-fit: cover; 
+            border-radius: 6px; 
+            margin-right: 12px; 
+            background: #222; 
+        }
+        .game-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 110px; }
+        h3 { margin: 0 0 4px 0; font-size: 16px; color: #fff; font-weight: 600; line-height: 1.2; }
+        .meta { color: #00ff88; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
+        .desc { font-size: 10px; color: #aaa; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+        .btn-download { 
+            background: linear-gradient(90deg, #0088cc, #005f8f); 
+            color: white; 
+            border: none; 
+            padding: 8px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold; 
+            width: 100%; 
+            text-transform: uppercase;
+            margin-top: auto;
+        }
+        .btn-download:active { transform: scale(0.98); opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div id="games-container"></div>
+    
+    <script src="games.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready(); tg.expand();
 
-# --- TUS LLAVES ---
-LLAVES = [
-    "f7c4823bc30547ecaa903e4b8325317f", 
-    "f29b1f90e6b84d90804553e1a57b49ff",
-    "f812a1f7516144729bd00c31058846c8",
-    "a38abdb3603149ea9cbb0d29ba9ad2be"
-]
-key_actual = 0
-PAGINAS_TOTALES = 5 
+        const container = document.getElementById('games-container');
 
-def obtener_html(url):
-    global key_actual
-    url_encoded = urllib.parse.quote(url)
-    while key_actual < len(LLAVES):
-        api_url = f"https://api.scrapingant.com/v2/general?url={url_encoded}&x-api-key={LLAVES[key_actual]}&browser=true"
-        try:
-            r = requests.get(api_url, timeout=60)
-            if r.status_code == 200: return r.text
-            else: key_actual += 1
-        except: return None
-    return None
+        // Función segura para enviar
+        window.enviar = function(cmd) {
+            tg.sendData(cmd);
+            tg.close();
+        }
 
-def limpiar_texto(texto):
-    if not texto: return ""
-    return texto.strip().replace("\n", " ").replace("\r", "")
+        function render() {
+            if (typeof DATABASE_JUEGOS === 'undefined') {
+                container.innerHTML = "<p style='text-align:center; color:red'>Error: No cargó games.js</p>";
+                return;
+            }
 
-def iniciar_cosecha():
-    base_datos = []
-    print(f"💎 INICIANDO SCRAPER V4 (FILTRO LIMPIEZA)")
+            DATABASE_JUEGOS.forEach(game => {
+                // AQUÍ ESTÁ EL TRUCO DEL PROXY PARA QUE SE VEAN LAS FOTOS
+                // Usamos 'images.weserv.nl' para cargar la foto aunque la web original no quiera
+                let imgUrl = game.imagen;
+                if (imgUrl.startsWith('http')) {
+                    imgUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imgUrl)}&w=150&h=200&fit=cover&output=jpg`;
+                } else {
+                    imgUrl = 'https://via.placeholder.com/150?text=TITOMX';
+                }
 
-    for p in range(1, PAGINAS_TOTALES + 1):
-        url = f"https://www.gamestorrents.app/juegos-pc/page/{p}/"
-        print(f"🌐 Escaneando Página {p}...")
-        html = obtener_html(url)
-        if not html: break
+                const div = document.createElement('div');
+                div.className = 'game-card';
+                div.innerHTML = `
+                    <img class="game-img" src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Error'">
+                    <div class="game-info">
+                        <div>
+                            <h3>${game.titulo}</h3>
+                            <div class="meta">${game.info}</div>
+                            <div class="desc">${game.desc}</div>
+                        </div>
+                        <button class="btn-download" onclick="enviar('${game.comando}')">
+                            DESCARGAR AHORA
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
 
-        soup = BeautifulSoup(html, 'html.parser')
-        juegos = soup.find_all('div', class_='post') 
-        if not juegos: juegos = soup.find_all('a', title=True)
-
-        for item in juegos:
-            try:
-                a_tag = item if item.name == 'a' else item.find('a')
-                if not a_tag: continue
-                
-                href = a_tag.get('href', '')
-                titulo_raw = a_tag.get('title', '')
-                
-                # --- FILTRO DE ORO ---
-                # Ignoramos categorías y basura
-                if "juegos torrents de" in titulo_raw.lower() or "page" in href:
-                    continue
-
-                if '/juegos-pc/' in href and len(titulo_raw) > 3:
-                    t = titulo_raw.replace('Descargar ', '').replace(' para PC', '').replace(' por Torrent', '').split('(')[0].strip()
-                    print(f"   > Procesando: {t}...", end="\r")
-                    
-                    sub_html = obtener_html(href)
-                    datos = {'imagen': '', 'peso': 'PC', 'desc': 'Disponible en TITOMX.'}
-                    
-                    if sub_html:
-                        sub_soup = BeautifulSoup(sub_html, 'html.parser')
-                        og = sub_soup.find("meta", property="og:image")
-                        if og: datos['imagen'] = og["content"]
-                        
-                        texto = sub_soup.get_text()
-                        match = re.search(r'(?:Tamaño|Size|Peso)[:\s]+([\d\.]+\s*[GM]Bs?)', texto, re.IGNORECASE)
-                        if match: datos['peso'] = match.group(1)
-                        
-                        og_desc = sub_soup.find("meta", property="og:description")
-                        if og_desc: datos['desc'] = limpiar_texto(og_desc["content"])[:300] + "..."
-
-                    # Si no hay imagen, usamos placeholder
-                    if not datos['imagen']: datos['imagen'] = "https://via.placeholder.com/150"
-
-                    base_datos.append({
-                        "titulo": t,
-                        "imagen": datos['imagen'],
-                        "info": f"TITOMX.STORE | {datos['peso']}",
-                        "desc": datos['desc'],
-                        "comando": f"/game {t}"
-                    })
-            except: continue
-
-    with open("games.js", "w", encoding="utf-8") as f:
-        f.write("const DATABASE_JUEGOS = ")
-        json.dump(base_datos, f, ensure_ascii=False, indent=2)
-        f.write(";")
-    print("\n✅ LISTO. Sube games.js a GitHub.")
-
-if __name__ == "__main__":
-    iniciar_cosecha()
+        render();
+    </script>
+</body>
+</html>
