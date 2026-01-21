@@ -5,281 +5,295 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>TitoYTVIP - Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #00f2ea;
             --secondary: #ff0055;
-            --bg-dark: #0a0a0a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --glass: 10px;
+            --bg-dark: #0f0f13;
+            --card-bg: #1a1a20;
+            --text-gray: #a0a0b0;
         }
 
         body {
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 10% 20%, rgba(0, 242, 234, 0.1) 0%, transparent 20%),
-                              radial-gradient(circle at 90% 80%, rgba(255, 0, 85, 0.1) 0%, transparent 20%);
             color: #ffffff;
             font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            padding-bottom: 80px; /* Espacio para el menú de abajo */
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* HEADER ANIMADO */
+        /* HEADER */
         .header {
-            text-align: center;
-            padding: 30px 20px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
-        
         .logo {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            background: linear-gradient(90deg, #fff, var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 242, 234, 0.5);
-            animation: pulse 3s infinite;
-        }
-
-        /* NAVEGACIÓN */
-        .nav-container {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding: 0 15px;
-        }
-
-        .nav-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #aaa;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .nav-btn.active {
-            background: var(--primary);
-            color: #000;
-            box-shadow: 0 0 15px var(--primary);
-            font-weight: bold;
-        }
-
-        /* CONTENIDO */
-        .content-section {
-            display: none;
-            padding: 0 20px 80px 20px;
-            animation: fadeIn 0.5s ease;
-        }
-        .content-section.active { display: block; }
-
-        /* TARJETAS */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(var(--glass));
-            -webkit-backdrop-filter: blur(var(--glass));
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--primary);
-            box-shadow: 0 0 10px var(--primary);
-        }
-
-        .card.hot::before { background: var(--secondary); box-shadow: 0 0 10px var(--secondary); }
-
-        h2 { margin-top: 0; font-family: 'Orbitron', sans-serif; font-size: 1.1em; display: flex; align-items: center; gap: 10px; }
-        .icon-box { 
-            width: 30px; height: 30px; 
-            background: rgba(255,255,255,0.1); 
-            border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.8em;
-        }
-
-        p { color: #ccc; font-size: 0.95em; line-height: 1.5; }
-
-        /* BLOQUES DE CÓDIGO COPIABLES */
-        .code-block {
-            background: rgba(0,0,0,0.5);
-            padding: 12px;
-            border-radius: 8px;
-            font-family: monospace;
+            font-size: 1.5em;
             color: var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0;
-            border: 1px dashed rgba(255,255,255,0.2);
-            cursor: pointer;
+            text-shadow: 0 0 10px rgba(0, 242, 234, 0.5);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .code-block:active { background: rgba(0, 242, 234, 0.1); }
-        .code-icon { color: #555; font-size: 0.8em; }
+        .vip-badge {
+            font-size: 0.6em; background: var(--secondary); padding: 3px 8px; border-radius: 5px; color: white; vertical-align: middle;
+        }
 
-        /* ESTADO DEL BOT */
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(0,255,100,0.1);
-            color: #00ff66;
-            padding: 5px 12px;
+        /* SECCIONES */
+        .section { display: none; padding: 15px; animation: fadeUp 0.4s ease; }
+        .section.active { display: block; }
+
+        h2 { font-size: 1.2em; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 20px; }
+
+        /* GRID DE JUEGOS (Estilo Netflix) */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+            gap: 15px;
+        }
+        .game-card {
+            background: var(--card-bg);
             border-radius: 12px;
-            font-size: 0.8em;
-            margin-top: 5px;
-            border: 1px solid rgba(0,255,100,0.2);
-        }
-        .pulse-dot {
-            width: 8px; height: 8px; background: #00ff66; border-radius: 50%;
-            box-shadow: 0 0 8px #00ff66;
-            animation: blink 1.5s infinite;
-        }
-
-        /* ANIMACIONES */
-        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
-        @keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* BOTÓN FLOTANTE CERRAR */
-        .fab-close {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--secondary);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 30px;
-            font-weight: bold;
-            box-shadow: 0 5px 20px rgba(255, 0, 85, 0.4);
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.2s;
             cursor: pointer;
-            z-index: 100;
-            display: flex; align-items: center; gap: 8px;
         }
+        .game-card:active { transform: scale(0.95); }
+        .game-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+        .game-info {
+            padding: 10px;
+        }
+        .game-title { font-size: 0.9em; font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .game-genre { font-size: 0.7em; color: var(--text-gray); }
+        .game-dl-btn {
+            margin-top: 8px;
+            background: rgba(0, 242, 234, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            width: 100%;
+            padding: 5px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        /* TARJETAS DE TUTORIALES */
+        .tutorial-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .t-icon {
+            width: 50px; height: 50px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5em;
+        }
+        .t-content h3 { margin: 0 0 5px 0; font-size: 1em; }
+        .t-content p { margin: 0; font-size: 0.8em; color: var(--text-gray); }
+
+        /* MENÚ DE NAVEGACIÓN INFERIOR (Estilo App Nativa) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #15151a;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+        .nav-item {
+            text-align: center;
+            color: #666;
+            font-size: 0.7em;
+            cursor: pointer;
+            flex: 1;
+        }
+        .nav-item i { font-size: 1.5em; display: block; margin-bottom: 4px; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active i { transform: translateY(-5px); text-shadow: 0 5px 10px rgba(0,242,234,0.4); }
+
+        /* NOTIFICACIÓN FLOTANTE */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: var(--primary); color: #000;
+            padding: 10px 20px; border-radius: 30px;
+            font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            transition: 0.3s; z-index: 2000;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="logo">TITAN V52</div>
-        <div class="status-badge"><div class="pulse-dot"></div> Sistemas Online</div>
-    </div>
-
-    <div class="nav-container">
-        <div class="nav-btn active" onclick="showTab('inicio')">Inicio</div>
-        <div class="nav-btn" onclick="showTab('guias')">Guías</div>
-        <div class="nav-btn" onclick="showTab('cmds')">Comandos</div>
-    </div>
-
-    <div id="inicio" class="content-section active">
-        <div class="card hot">
-            <h2><div class="icon-box">🔥</div> Bienvenido, Jefe</h2>
-            <p>Has accedido al panel de control avanzado. Desde aquí puedes aprender a dominar todas las funciones del bot.</p>
+        <div class="logo">
+            <span>TITAN <span style="color:white">V52</span></span>
+            <span class="vip-badge">PRO</span>
         </div>
+    </div>
+
+    <div id="toast" class="toast">✅ Comando Copiado</div>
+
+    <div id="home" class="section active">
+        <div style="background: linear-gradient(45deg, #111, #222); padding: 20px; border-radius: 15px; margin-bottom: 25px; text-align: center; border: 1px solid #333;">
+            <i class="fa-solid fa-robot" style="font-size: 3em; color: var(--primary); margin-bottom: 10px;"></i>
+            <h3 style="margin:0">Panel de Control</h3>
+            <p style="color: #888; font-size: 0.9em;">Gestiona todo tu imperio digital desde aquí.</p>
+        </div>
+
+        <h2>🔥 Lo más buscado</h2>
+        <div class="games-grid">
+            <div class="game-card" onclick="copy('/game gta v')">
+                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/header.jpg" class="game-img">
+                <div class="game-info">
+                    <div class="game-title">GTA V</div>
+                    <div class="game-genre">Acción / Mundo Abierto</div>
+                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
+                </div>
+            </div>
+            <div class="game-card" onclick="copy('/game resident evil 4')">
+                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2050650/header.jpg" class="game-img">
+                <div class="game-info">
+                    <div class="game-title">Resident Evil 4</div>
+                    <div class="game-genre">Terror / Remake</div>
+                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
+                </div>
+            </div>
+            <div class="game-card" onclick="copy('/game fc 24')">
+                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2195250/header.jpg" class="game-img">
+                <div class="game-info">
+                    <div class="game-title">EA SPORTS FC 24</div>
+                    <div class="game-genre">Deportes</div>
+                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
+                </div>
+            </div>
+            <div class="game-card" onclick="copy('/game elden ring')">
+                <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg" class="game-img">
+                <div class="game-info">
+                    <div class="game-title">Elden Ring</div>
+                    <div class="game-genre">RPG / Souls</div>
+                    <div class="game-dl-btn"><i class="fa-solid fa-download"></i> Copiar Comando</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorials" class="section">
+        <h2>📚 Guías Interactivas</h2>
         
-        <div class="card">
-            <h2><div class="icon-box">📢</div> Novedades V52</h2>
-            <p>• Motor de Torrents Inteligente activado.<br>• Mini App integrada.<br>• Buscador con IA fuzzy logic.</p>
-        </div>
-
-        <div class="card">
-            <h2><div class="icon-box">💎</div> Estado VIP</h2>
-            <p>Disfruta de descargas ilimitadas, velocidad prioritaria y soporte 24/7.</p>
-        </div>
-    </div>
-
-    <div id="guias" class="content-section">
-        <div class="card">
-            <h2><div class="icon-box">🎮</div> Bajar Juegos</h2>
-            <p>1. Usa el comando de búsqueda.<br>2. El bot te dará enlaces.<br>3. Pégalos y espera.</p>
-            <div class="code-block" onclick="copyText('/game gta v')">
-                <span>Ej: /game gta v</span> <i class="fa-regular fa-copy code-icon"></i>
+        <div class="tutorial-card">
+            <div class="t-icon" style="color: #ff0055;"><i class="fa-solid fa-magnet"></i></div>
+            <div class="t-content">
+                <h3>Torrents Master</h3>
+                <p>Sube tu archivo .torrent o pega el Magnet Link. El bot lo detecta solo.</p>
             </div>
         </div>
 
-        <div class="card">
-            <h2><div class="icon-box">🧲</div> Modo Torrent</h2>
-            <p>No necesitas programas externos. Solo pega el <b>Magnet Link</b> o sube el archivo <b>.torrent</b> al chat.</p>
+        <div class="tutorial-card">
+            <div class="t-icon" style="color: #00f2ea;"><i class="fa-brands fa-youtube"></i></div>
+            <div class="t-content">
+                <h3>Descarga Videos</h3>
+                <p>Envía cualquier link de YouTube, Instagram o TikTok. Calidad 4K automática.</p>
+            </div>
         </div>
-        
-        <div class="card">
-            <h2><div class="icon-box">☁️</div> Nubes & Videos</h2>
-            <p>Soporte nativo para:<br>• YouTube (4K/1080p)<br>• MediaFire (Directo)<br>• Mega (Desencriptado)</p>
-        </div>
-    </div>
 
-    <div id="cmds" class="content-section">
-        <div class="card">
-            <h2>⚡ Comandos Rápidos</h2>
-            <p>Toca para copiar:</p>
-            
-            <div class="code-block" onclick="copyText('/game Resident Evil')">
-                <span>🔎 Buscar Juego</span> <i class="fa-regular fa-copy code-icon"></i>
-            </div>
-            
-            <div class="code-block" onclick="copyText('/claim')">
-                <span>🎁 Reclamar Bonus Diario</span> <i class="fa-regular fa-copy code-icon"></i>
-            </div>
-            
-            <div class="code-block" onclick="copyText('/my_status')">
-                <span>👤 Ver Mi Perfil</span> <i class="fa-regular fa-copy code-icon"></i>
-            </div>
-
-            <div class="code-block" onclick="copyText('/support necesito ayuda')">
-                <span>🆘 Pedir Soporte</span> <i class="fa-regular fa-copy code-icon"></i>
+        <div class="tutorial-card">
+            <div class="t-icon" style="color: #ffa500;"><i class="fa-solid fa-cloud"></i></div>
+            <div class="t-content">
+                <h3>Nubes (Mega/MediaFire)</h3>
+                <p>El bot extrae enlaces directos. Solo pega el link de la carpeta o archivo.</p>
             </div>
         </div>
     </div>
 
-    <button class="fab-close" onclick="Telegram.WebApp.close()">
-        <i class="fa-solid fa-xmark"></i> Cerrar Panel
-    </button>
+    <div id="commands" class="section">
+        <h2>⚡ Lista de Comandos</h2>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="tutorial-card" onclick="copy('/my_status')" style="margin:0; cursor:pointer;">
+                <div class="t-icon"><i class="fa-solid fa-user"></i></div>
+                <div class="t-content"><h3>/my_status</h3><p>Ver mi perfil VIP y saldo.</p></div>
+                <i class="fa-regular fa-copy" style="color:#666"></i>
+            </div>
+            <div class="tutorial-card" onclick="copy('/id')" style="margin:0; cursor:pointer;">
+                <div class="t-icon"><i class="fa-solid fa-fingerprint"></i></div>
+                <div class="t-content"><h3>/id</h3><p>Obtener mi ID de Telegram.</p></div>
+                <i class="fa-regular fa-copy" style="color:#666"></i>
+            </div>
+            <div class="tutorial-card" onclick="copy('/support ')" style="margin:0; cursor:pointer;">
+                <div class="t-icon"><i class="fa-solid fa-headset"></i></div>
+                <div class="t-content"><h3>/support</h3><p>Enviar mensaje al dueño.</p></div>
+                <i class="fa-regular fa-copy" style="color:#666"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <i class="fa-solid fa-house"></i> Inicio
+        </div>
+        <div class="nav-item" onclick="switchTab('tutorials', this)">
+            <i class="fa-solid fa-book-open"></i> Guías
+        </div>
+        <div class="nav-item" onclick="switchTab('commands', this)">
+            <i class="fa-solid fa-terminal"></i> Comandos
+        </div>
+    </div>
 
     <script>
         Telegram.WebApp.ready();
-        Telegram.WebApp.expand(); // Pantalla completa siempre
+        Telegram.WebApp.expand();
 
-        // Lógica de Pestañas
-        function showTab(tabId) {
-            // Ocultar todas
-            document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        // CAMBIAR PESTAÑAS
+        function switchTab(tabId, element) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            // Quitar activo del menú
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             
-            // Mostrar seleccionada
+            // Mostrar la nueva
             document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
             
-            // Activar botón
-            event.target.classList.add('active');
-            
-            // Vibración háptica (si Telegram lo permite)
             Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
 
-        // Lógica de Copiar
-        function copyText(text) {
+        // COPIAR TEXTO
+        function copy(text) {
             navigator.clipboard.writeText(text).then(() => {
-                Telegram.WebApp.showPopup({
-                    title: '✅ Copiado',
-                    message: `Comando copiado: ${text}`,
-                    buttons: [{type: 'ok'}]
-                });
+                showToast(`Copiado: ${text}`);
+                Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             });
+        }
+
+        // MOSTRAR TOAST
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
         }
     </script>
 </body>
