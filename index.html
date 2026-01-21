@@ -131,6 +131,15 @@
         <div class="nav-item" onclick="cambiarTab('favs', this)">
             <i class="fas fa-heart"></i> Favoritos
         </div>
+    <div id="view-series" class="view-section">
+        <div class="section-title"><i class="fas fa-tv" style="color: var(--primary);"></i> Series TV</div>
+        <div id="series-container" class="store-grid"></div>
+    </div>
+
+    <div id="view-novelas" class="view-section">
+        <div class="section-title"><i class="fas fa-book-open" style="color: var(--primary);"></i> Novelas</div>
+        <div id="novelas-container" class="store-grid"></div>
+    </div>
     </div>
 
     <script src="games.js"></script> 
@@ -156,20 +165,27 @@
         let swiper;
 
         function init() {
-            // 1. APLICAR CONFIGURACIÓN DEL PANEL (Lo primero de todo)
+            // 1. APLICAR CONFIGURACIÓN DEL PANEL
             if (typeof TITO_CONFIG !== 'undefined') {
                 document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
                 document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
                 document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
-                renderTienda(); // Cargar la tienda con datos del panel
-            } else {
-                console.log("⚠️ No se cargó config.js, usando valores por defecto.");
+                
+                renderTienda();
+                // 👇 ESTO ES LO NUEVO QUE FALTABA 👇
+                renderExtra('series', 'series-container');   
+                renderExtra('novelas', 'novelas-container'); 
             }
 
             // 2. CARGAR JUEGOS
-            if (typeof DATABASE_JUEGOS === 'undefined') {
+            if (typeof DATABASE_JUEGOS !== 'undefined') {
+                juegosMostrados = DATABASE_JUEGOS;
+                renderDestacados();
+                renderJuegos(juegosMostrados, 'games-container');
+            } else {
                 document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red'>⚠️ Error: Sube games.js</p>";
-                return;
+            }
+        
             }
             juegosMostrados = DATABASE_JUEGOS;
             renderDestacados();
@@ -324,7 +340,34 @@
         }
         function descargar(cmd) { tg.sendData(cmd); tg.close(); }
         function comprar(item) { tg.sendData(`/comprar ${item}`); tg.close(); }
-
+        
+        // --- FUNCIÓN PARA CARGAR SERIES Y NOVELAS ---
+        function renderExtra(tipo, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            
+            // Verificamos si existe la lista en la config (config.js)
+            // TITO_CONFIG['series'] o TITO_CONFIG['novelas']
+            const lista = (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
+            
+            if (lista.length > 0) {
+                lista.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'store-item'; // Reusamos el diseño de la tienda
+                    div.innerHTML = `
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'">
+                        <div class="store-info">
+                            <div class="store-title">${item.titulo}</div>
+                            <div class="store-price" style="color:#aaa; font-size:11px">${item.info}</div>
+                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER AHORA</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>Próximamente...</p>";
+            }
+        }
         init();
     </script>
 </body>
