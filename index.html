@@ -1,6 +1,15 @@
 <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
+        // 1. INICIALIZAR TELEGRAM (CON PROTECCIÓN)
+        let tg = null;
+        try {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+            } else {
+                console.log("⚠️ Modo Navegador (Fuera de Telegram)");
+            }
+        } catch (e) { console.log(e); }
 
         // 🧠 INTELIGENCIA DE CATEGORÍAS
         const KEYWORDS = {
@@ -17,18 +26,46 @@
         let categoriaActual = 'Todo';
         let swiper;
 
-        // --- FUNCIONES DE RENDERIZADO (DEFINIR PRIMERO) ---
+        // --- FUNCIÓN INIT (LA JEFA) ---
+        function init() {
+            console.log("🚀 Iniciando TitoMX...");
+
+            // A) CARGAR CONFIGURACIÓN (Panel Admin)
+            if (typeof TITO_CONFIG !== 'undefined') {
+                document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
+                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
+                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
+                
+                renderTienda();
+                renderExtra('series', 'series-container');   
+                renderExtra('novelas', 'novelas-container'); 
+            } else {
+                console.log("⚠️ No se encontró config.js");
+            }
+
+            // B) CARGAR JUEGOS (Base de Datos)
+            if (typeof DATABASE_JUEGOS !== 'undefined') {
+                juegosMostrados = DATABASE_JUEGOS;
+                renderDestacados();
+                renderJuegos(juegosMostrados, 'games-container');
+            } else {
+                document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>⚠️ Error: Sube el archivo games.js</p>";
+            }
+        }
+
+        // --- FUNCIONES DE RENDERIZADO ---
 
         function renderTienda() {
             const container = document.getElementById('store-container');
+            if(!container) return;
             container.innerHTML = "";
             
-            if (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
+            if (TITO_CONFIG.tienda && TITO_CONFIG.tienda.length > 0) {
                 TITO_CONFIG.tienda.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'store-item';
                     div.innerHTML = `
-                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150'">
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/300?text=Producto'">
                         <div class="store-info">
                             <div class="store-title">${item.nombre}</div>
                             <div class="store-price" style="color:${TITO_CONFIG.color_principal}">${item.precio}</div>
@@ -38,12 +75,13 @@
                     container.appendChild(div);
                 });
             } else {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>Tienda vacía.</p>";
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>No hay productos.</p>";
             }
         }
 
         function renderExtra(tipo, containerId) {
             const container = document.getElementById(containerId);
+            if(!container) return;
             container.innerHTML = "";
             
             const lista = (typeof TITO_CONFIG !== 'undefined' && TITO_CONFIG[tipo]) ? TITO_CONFIG[tipo] : [];
@@ -53,22 +91,23 @@
                     const div = document.createElement('div');
                     div.className = 'store-item'; 
                     div.innerHTML = `
-                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'">
+                        <img src="${item.imagen}" class="store-img" onerror="this.src='https://via.placeholder.com/300?text=Sin+Foto'">
                         <div class="store-info">
                             <div class="store-title">${item.titulo}</div>
                             <div class="store-price" style="color:#aaa; font-size:11px">${item.info}</div>
-                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER</button>
+                            <button class="btn-buy" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--primary')}" onclick="descargar('${item.comando}')">VER AHORA</button>
                         </div>
                     `;
                     container.appendChild(div);
                 });
             } else {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>Próximamente...</p>";
+                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666; font-size:12px;'>Próximamente...</p>";
             }
         }
 
         function renderDestacados() {
             const wrapper = document.getElementById('featured-wrapper');
+            if(!wrapper) return;
             const destacados = DATABASE_JUEGOS.filter(g => g.destacado === true).slice(0, 5);
             
             if (destacados.length === 0) {
@@ -102,11 +141,12 @@
 
         function renderJuegos(lista, containerId) {
             const container = document.getElementById(containerId);
+            if(!container) return;
             container.innerHTML = "";
             const fragment = document.createDocumentFragment();
 
             if(lista.length === 0) {
-                container.innerHTML = "<p style='text-align:center; color:#666; padding:20px'>No se encontraron juegos.</p>";
+                container.innerHTML = "<p style='text-align:center; color:#666; padding:20px'>No se encontraron resultados.</p>";
                 return;
             }
 
@@ -136,33 +176,6 @@
                 fragment.appendChild(div);
             });
             container.appendChild(fragment);
-        }
-
-        // --- INICIALIZACIÓN (DESPUÉS DE DEFINIR TODO) ---
-        function init() {
-            console.log("Iniciando TitoMX...");
-
-            // 1. Aplicar Configuración
-            if (typeof TITO_CONFIG !== 'undefined') {
-                document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
-                document.querySelector('.logo').innerHTML = TITO_CONFIG.titulo_web;
-                document.getElementById('searchInput').placeholder = "🔍 " + TITO_CONFIG.mensaje_bienvenida + "...";
-                
-                renderTienda();
-                renderExtra('series', 'series-container');   
-                renderExtra('novelas', 'novelas-container'); 
-            } else {
-                console.log("⚠️ Configuración no cargada.");
-            }
-
-            // 2. Cargar Juegos
-            if (typeof DATABASE_JUEGOS !== 'undefined') {
-                juegosMostrados = DATABASE_JUEGOS;
-                renderDestacados();
-                renderJuegos(juegosMostrados, 'games-container');
-            } else {
-                document.getElementById('games-container').innerHTML = "<p style='text-align:center; color:red'>⚠️ Error: Sube games.js</p>";
-            }
         }
 
         // --- UTILIDADES ---
@@ -212,13 +225,20 @@
         function cambiarTab(tab, element) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + tab).classList.add('active');
-            element.classList.add('active');
+            const seccion = document.getElementById('view-' + tab);
+            if (seccion) seccion.classList.add('active');
+            if (element) element.classList.add('active');
             if (tab === 'favs') cargarFavoritos();
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
-        function descargar(cmd) { tg.sendData(cmd); tg.close(); }
-        function comprar(item) { tg.sendData(`/comprar ${item}`); tg.close(); }
+        function descargar(cmd) { 
+            if(tg) { tg.sendData(cmd); tg.close(); }
+            else { alert("Comando enviado: " + cmd + " (Solo funciona en Telegram)"); }
+        }
+        function comprar(item) { 
+            if(tg) { tg.sendData(`/comprar ${item}`); tg.close(); }
+            else { alert("Comprar: " + item); }
+        }
 
         // --- ARRANCAR ---
         init();
