@@ -143,22 +143,22 @@
         let swiper;
 
         function init() {
-            // 1. Cargar Configuración (Protegido contra errores)
+            // 1. Cargar Configuración Visual
             if (typeof TITO_CONFIG !== 'undefined') {
                 document.documentElement.style.setProperty('--primary', TITO_CONFIG.color_principal);
                 renderTienda();
-                renderExtra('series', 'series-container');   
-                renderExtra('novelas', 'novelas-container'); 
-            } else {
-                console.log("⚠️ Error: config.js no cargó o tiene error de sintaxis.");
             }
 
-            // 2. Cargar Juegos (Protegido contra errores)
+            // 2. CARGAR JUEGOS (Manuales desde games.js)
             if (typeof DATABASE_JUEGOS !== 'undefined') {
                 juegosMostrados = DATABASE_JUEGOS;
                 renderDestacados();
                 renderJuegos(juegosMostrados, 'games-container');
-            } else {
+            }
+
+            // 3. CARGAR CATÁLOGO AUTOMÁTICO DEL BOT (Lo nuevo 🔥)
+            cargarCatalogoAutomatico();
+        } else {
                 // Si llegamos aquí, games.js está roto. Mostramos aviso.
                 const container = document.getElementById('games-container');
                 if(container) {
@@ -167,6 +167,54 @@
             }
         }
 
+        function cargarCatalogoAutomatico() {
+            // El archivo que crea api_tito.php
+            fetch('catalogo_peliculas.json?v=' + new Date().getTime()) // ?v=time evita caché antigua
+                .then(response => response.json())
+                .then(data => {
+                    // Filtramos por tipo (según lo que mandó el bot)
+                    const series = data.filter(item => item.tipo === 'serie');
+                    const pelis = data.filter(item => item.tipo === 'pelicula' || item.tipo === 'novela');
+
+                    // Renderizamos en sus contenedores
+                    renderContenidoBot(series, 'series-container');
+                    renderContenidoBot(pelis, 'novelas-container'); // Ojo: Aquí puedes decidir dónde van las pelis
+                })
+                .catch(err => {
+                    console.log("Aún no hay contenido automático del bot.", err);
+                    document.getElementById('series-container').innerHTML = "<p style='text-align:center; color:#666'>Esperando al Bot...</p>";
+                });
+        }
+
+        function renderContenidoBot(lista, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = "";
+            
+            if (lista.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#666'>Nada por aquí aún.</p>";
+                return;
+            }
+
+            lista.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'store-item';
+                // Usamos una imagen genérica si el bot no mandó foto (puedes mejorar esto luego)
+                const imagen = item.imagen || 'https://via.placeholder.com/150x200?text=VIDEO';
+                
+                div.innerHTML = `
+                    <img src="${getProxyImg(imagen)}" class="store-img">
+                    <div class="store-info">
+                        <div class="store-title">${item.titulo}</div>
+                        <div class="store-price">Agregado: ${new Date(item.fecha).toLocaleDateString()}</div>
+                        <a href="${item.link_telegram}" class="btn-base btn-dl" style="margin-top:auto; text-decoration:none;">
+                            📥 ABRIR EN TELEGRAM
+                        </a>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
         function renderTienda() {
             const container = document.getElementById('store-container');
             if(!container) return;
@@ -317,3 +365,4 @@
     </script>
 </body>
 </html>
+
