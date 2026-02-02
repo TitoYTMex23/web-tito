@@ -154,30 +154,22 @@
                 juegosMostrados = DATABASE_JUEGOS;
                 renderDestacados();
                 renderJuegos(juegosMostrados, 'games-container');
-            } else {
-                 // Si falla games.js, mostramos aviso.
-                 const container = document.getElementById('games-container');
-                 if(container) {
-                      container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px'>⚠️ Error en games.js: Revisa las comillas.</p>";
-                 }
             }
 
-            // 3. CARGAR CATÁLOGO AUTOMÁTICO DEL BOT (Lo nuevo 🔥)
+            // 3. CARGAR CATÁLOGO AUTOMÁTICO DEL BOT
             cargarCatalogoAutomatico();
         }
 
         function cargarCatalogoAutomatico() {
             // El archivo que crea api_tito.php
-            fetch('catalogo_peliculas.json?v=' + new Date().getTime()) // ?v=time evita caché antigua
+            fetch('catalogo_peliculas.json?v=' + new Date().getTime()) 
                 .then(response => response.json())
                 .then(data => {
-                    // Filtramos por tipo (según lo que mandó el bot)
                     const series = data.filter(item => item.tipo === 'serie');
                     const pelis = data.filter(item => item.tipo === 'pelicula' || item.tipo === 'novela');
 
-                    // Renderizamos en sus contenedores
                     renderContenidoBot(series, 'series-container');
-                    renderContenidoBot(pelis, 'novelas-container'); // Ojo: Aquí puedes decidir dónde van las pelis
+                    renderContenidoBot(pelis, 'novelas-container'); 
                 })
                 .catch(err => {
                     console.log("Aún no hay contenido automático del bot.", err);
@@ -198,7 +190,6 @@
             lista.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'store-item';
-                // Usamos una imagen genérica si el bot no mandó foto (puedes mejorar esto luego)
                 const imagen = item.imagen || 'https://cdn-icons-png.flaticon.com/512/1179/1179120.png';
                 
                 div.innerHTML = `
@@ -214,6 +205,7 @@
                 container.appendChild(div);
             });
         }
+        
         function renderTienda() {
             const container = document.getElementById('store-container');
             if(!container) return;
