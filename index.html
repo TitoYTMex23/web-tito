@@ -154,17 +154,16 @@
                 juegosMostrados = DATABASE_JUEGOS;
                 renderDestacados();
                 renderJuegos(juegosMostrados, 'games-container');
+            } else {
+                 // Si falla games.js, mostramos aviso.
+                 const container = document.getElementById('games-container');
+                 if(container) {
+                      container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px'>⚠️ Error en games.js: Revisa las comillas.</p>";
+                 }
             }
 
             // 3. CARGAR CATÁLOGO AUTOMÁTICO DEL BOT (Lo nuevo 🔥)
             cargarCatalogoAutomatico();
-        }
-                // Si llegamos aquí, games.js está roto. Mostramos aviso.
-                const container = document.getElementById('games-container');
-                if(container) {
-                     container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px'>⚠️ Error en games.js: Revisa las comillas.</p>";
-                }
-            }
         }
 
         function cargarCatalogoAutomatico() {
@@ -365,5 +364,3 @@
     </script>
 </body>
 </html>
-
-
